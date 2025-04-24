@@ -1,0 +1,9 @@
+﻿{
+	"id": "magica.extendedslugbasefeatures",
+	"name": "Extended Slugbase Features",
+	"version": "1.0.0",
+	"authors": "MagicaJaphet",
+	"description": "A dependency to extend various features not found in Slugbase to Slugbase characters.",
+	"requirements": [ "slime-cubed.slugbase" ],
+	"requirements_names": [ "SlugBase" ],
+}
