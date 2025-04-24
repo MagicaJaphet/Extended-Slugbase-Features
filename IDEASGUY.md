@@ -1,4 +1,5 @@
 # IDEAS
+To go back to documentation, follow [README.md](./README.md)
 ## QoL Features
 - Input recording system for intro cutscenes
 

@@ -1,9 +1,9 @@
 # Extended Slugbase Features
-![hippo](https://i.imgur.com/NCCU4aD.gif)
+![til](./extended-slugbase.gif)
 
 A framework aiming to extend the basic features of Slugbase to include quality of life functions for modders. This documentation assumes you know the basics of [Slugbase](https://slimecubed.github.io/slugbase/articles/gettingstarted.html?target="_blank"). Otherwise, do  check out their documentation first.
 
-### The general idea list can be found in [IDEASGUY.md](/IDEASGUY.md), feel free to make suggestions on Raincord by pinging me (<@192423177320792065>).
+### The general idea list can be found in [IDEASGUY.md](./IDEASGUY.md), feel free to make suggestions on Raincord by pinging me (<@192423177320792065>).
 
 # Basic Features
 These are features that would be added in the `features` list of your Slugbase character's JSON.
