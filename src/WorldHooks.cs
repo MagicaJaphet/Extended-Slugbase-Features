@@ -233,10 +233,10 @@ namespace ExtendedSlugbaseFeatures
 			/// </summary>
 			internal static bool RainWorldGame_TryGetPlayerStartPos(On.RainWorldGame.orig_TryGetPlayerStartPos orig, string room, out IntVector2 pos)
 			{
-				if (Custom.rainWorld.inGameSlugCat != null && SlugBaseCharacter.TryGet(Custom.rainWorld.inGameSlugCat, out var character) && Resources.spawnPosition.TryGet(character, out int[] startPos))
+				if (Custom.rainWorld.inGameSlugCat != null && SlugBaseCharacter.TryGet(Custom.rainWorld.inGameSlugCat, out var character) && Resources.spawnPosition.TryGet(character, out var startRooms) && startRooms.ContainsKey(room))
 				{
-					pos = new((startPos.Length > 0 ? startPos[0] : 0), startPos.Length > 1 ? startPos[1] : 0);
-					return pos != new IntVector2(0, 0);
+					pos = startRooms[room];
+					return pos != null;
 				}
 
 				return orig(room, out pos);

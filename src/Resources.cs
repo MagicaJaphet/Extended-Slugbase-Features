@@ -272,7 +272,38 @@ namespace ExtendedSlugbaseFeatures
 
 			return stomachObject;
 		});
-		public static readonly GameFeature<int[]> spawnPosition = FeatureTypes.GameInts("start_position");
+		public static readonly Feature<Dictionary<string, IntVector2>> spawnPosition = new("start_position", json =>
+		{
+			Dictionary<string, IntVector2> startingPositions = [];
+
+			foreach (var room in json.AsObject())
+			{
+				if (!startingPositions.ContainsKey(room.Key))
+				{
+					string roomName = room.Key;
+					JsonList roomPosition = json.AsObject()[roomName].AsList();
+					IntVector2 tilePositon = new();
+					for (int i = 0; i < roomPosition.Count; i++)
+					{
+						if (roomPosition[i] is JsonAny any && any.TryInt() is int position)
+						{
+							if (i == 0)
+								tilePositon.x = position;
+							else
+								tilePositon.y = position;
+						}
+					}
+
+					startingPositions.Add(roomName, tilePositon);
+				}
+				else
+				{
+					throw new JsonException("Room name key already exists!", room.Value);
+				}
+			}
+
+			return startingPositions;
+		});
 
 		internal static bool ILSpearSpecks(bool orig, Player player) => ILHasFeature(orig, player, spearSpecks);
 		internal static bool ILCraftExplosives(bool orig, Player player) => ILHasFeature(orig, player, explosionCraft);

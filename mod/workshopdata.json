@@ -1,0 +1,18 @@
+{
+  "Title": "Extended Slugbase Features",
+  "Description": "A dependency to extend various features not found in Slugbase to Slugbase characters.\r\n\r\nTo see documentation, follow [url=https://github.com/MagicaJaphet/Extended-Slugbase-Features?tab=readme-ov-file]this link[/url] to the github page.",
+  "ID": "magica.extendedslugbasefeatures",
+  "Version": "1.0.0",
+  "TargetGameVersion": "v1.10.2",
+  "Requirements": "slime-cubed.slugbase",
+  "RequirementNames": "SlugBase",
+  "Authors": "MagicaJaphet",
+  "Visibility": "Public",
+  "Tags": [
+    "Dependency",
+    "Tools"
+  ],
+  "WorkshopID": 3469789934,
+  "UploadFilesOnly": true,
+  "UploadThumbnail": false
+}

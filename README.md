@@ -48,10 +48,21 @@ Color.Lerp(palette.blackColor, Custom.HSL2RGB(0.63055557f, 0.54f, 0.5f), Mathf.L
 ```
 
 ## World Features
-### "start_pos"
-`integer[]`\
-Ex: `"start_position": [20, 5]`\
-If the [start_room](https://slimecubed.github.io/slugbase/articles/features.html#start_room?target="_blank") array exists, attempts to set slugcat's position in room tiles. Room tiles can be measured with the Dev Tool [DebugMouse](https://rainworldmodding.miraheze.org/wiki/DebugMouse?target="_blank").
+### "start_position"
+```JSON
+{
+    "<room_name>": [0, 0]
+}
+```
+Ex:
+```JSON
+"start_position":
+{
+    "SI_C04": [20, 5],
+    "SU_A07": [10, 10]
+}
+```
+If the [start_room](https://slimecubed.github.io/slugbase/articles/features.html#start_room?target="_blank") array exists, attempts to set slugcat's position in room tiles based on the room's name. Room tiles can be measured with the Dev Tool [DebugMouse](https://rainworldmodding.miraheze.org/wiki/DebugMouse?target="_blank").
 
 ### "start_stomach_item"
 ```JSON
