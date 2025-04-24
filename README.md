@@ -41,7 +41,7 @@ Object properties support the `swollen` attribute, used when [Bubble Fruit](http
 ## General Features
 ### `"use_watchersblackamount"`
 `float`\
-Ex: `"use_watchersblackamount": 1f`\
+Ex: `"use_watchersblackamount": 1`\
 By default, when setting a [custom_colors](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#custom_colors?target="_blank") slot to pure black (#000000), which is usually used for transparency, it will attempt to use the palette's black color instead. This setting when specified, will use Nightcat or Watcher's blueish black color to the specified amount.
 ```csharp
 Color.Lerp(palette.blackColor, Custom.HSL2RGB(0.63055557f, 0.54f, 0.5f), Mathf.Lerp(0.08f, 0.04f, palette.darkness) * <use_watchersblackamount>)

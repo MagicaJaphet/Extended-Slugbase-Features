@@ -12,9 +12,10 @@ To go back to documentation, follow [README.md](./README.md)
 ## Player Features
 - Gourmand crafting
     - Custom crafting tables
+- Watcher visibility bonus [Player.VisibilityBonus]
 - Saint tongue
 - Saint karma 10 mechanic
-- Hunter's illness
+- Hunter illness
 
 ## Cosmetic Features
 - Artificer scar sprite
