@@ -8,6 +8,7 @@ To go back to documentation, follow [README.md](./README.md)
     - Allows to automatically check for certain conditions when inside of a room to run a script
     - Allows the ability to spawn Creatures
     - Allows for dynamic objects (Like the bomb in Artificer's last dream)
+- Open OE gate
 
 ## Player Features
 - Gourmand crafting
@@ -16,6 +17,7 @@ To go back to documentation, follow [README.md](./README.md)
 - Saint tongue
 - Saint karma 10 mechanic
 - Hunter illness
+- Rivulet Bubble Fruit popping
 
 ## Cosmetic Features
 - Artificer scar sprite
