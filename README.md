@@ -6,7 +6,7 @@ A framework aiming to extend the basic features of Slugbase to include quality o
 ### The general idea list can be found in [IDEASGUY.md](./IDEASGUY.md), feel free to make suggestions on Raincord by pinging me (<@192423177320792065>).
 
 # Basic Features
-These are features that would be added in the `features` list of your Slugbase character's JSON.
+These are features that would be added in the `"features": {}` object of your Slugbase character's JSON.
 
 # Default Object Properties
 This section is used to define specifics used in object properties to parse information. Each parameter will specify which DLC may be required, and what type of variable the parameter is passed as.
@@ -68,7 +68,7 @@ If the [start_room](https://slimecubed.github.io/slugbase/articles/features.html
 ```JSON
 {
     "type": "<AbstractPhysicalObject.Type>",
-    "<property>": string / int / float / bool
+    "<property>": null
 }
 ```
 Ex:
@@ -91,8 +91,8 @@ If set, spawns in the stomach of the Player on first realization. Allows to pass
 		"inputs": [ 
             { "repeat": 0, 
             "time": 0, 
-            "x": [-1..1], 
-            "y": [-1..1], 
+            "x": 0, 
+            "y": 0, 
             "jmp": true, 
             "pckp": true, 
             "mp": true, 
@@ -158,7 +158,7 @@ These features are for looks only, they do not impact gameplay.
 ### `"gill_rows"`
 `int`\
 Ex: `"gill_rows": 3"`\
-Gives the Player cosmetic Rivulet gills, automatically detecting if [custom_colors](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#custom_colors?target="_blank") contains colors for `"Gills"`.
+Gives the Player cosmetic Rivulet gills, automatically detecting if [custom_colors](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#custom_colors?target="_blank") contains colors for `"Gills"`. The total number of gills will be `gill_rows * 2`.
 
 ### `"saint_fluff"`
 `boolean`\
@@ -193,7 +193,7 @@ The maximum number of Slugpups which can spawn at any given time in the Slugbase
 ### `"can_access_whitetokens"`
 `boolean`\
 Ex: `"can_access_whitetokens": true`\
-Allows the Slugbase character to  access Broadcasts in their campaign, if they exist in their worldstate.
+Allows the Slugbase character to access Broadcasts in their campaign, if they exist in their worldstate.
 
 ### `"can_dualwield"`
 `boolean`\
