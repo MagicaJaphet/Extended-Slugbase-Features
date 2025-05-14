@@ -1,5 +1,5 @@
 # IDEAS
-To go back to documentation, follow [README.md](./README.md)
+To go back to documentation, follow [README.md](./README.md). **Bolded text** indicates features that are targeted for the next major release.
 ## QoL Features
 - Input recording system for intro cutscenes
 
@@ -8,19 +8,25 @@ To go back to documentation, follow [README.md](./README.md)
     - Allows to automatically check for certain conditions when inside of a room to run a script
     - Allows the ability to spawn Creatures
     - Allows for dynamic objects (Like the bomb in Artificer's last dream)
-- Open OE gate
+- **Open OE gate**
 
 ## Player Features
-- Gourmand crafting
+- **Gourmand crafting**
     - Custom crafting tables
 - Watcher visibility bonus [Player.VisibilityBonus]
-- Saint tongue
+- **Saint tongue**
 - Saint karma 10 mechanic
-- Hunter illness
-- Rivulet Bubble Fruit popping
+- **Saint's inability to throw spears**
+- **Hunter illness**
+- **Rivulet Bubble Fruit popping**
+- Custom swim speed / water stats
+- Jump heights
+- Configurable cold resistance
+- Less/More Player Grasps
 
 ## Cosmetic Features
-- Artificer scar sprite
+- ~~Artificer scar sprite~~
     - Allow the ability to flip the scar and face sprite
 - Adjustable base tail sizes
 - Ability to load atlases and hot replace sprites in the PlayerGraphics class
+- [DMS support](https://github.com/MatheusVigaro/TemplateCat/tree/main/src/plugin)

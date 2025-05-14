@@ -11,77 +11,55 @@ using System.Linq;
 using SlugBase.DataTypes;
 using System.Runtime.CompilerServices;
 using static MonoMod.InlineRT.MonoModRule;
+using static ExtendedSlugbaseFeatures.Resources;
 
 namespace ExtendedSlugbaseFeatures
 {
-	partial class Plugin
+	internal class PlayerHooks
 	{
-		internal class PlayerHooks
+		internal static void Apply()
 		{
-			internal static void Apply()
+			MechanicHooks.ApplyHooks();
+			GraphicHooks.ApplyHooks();
+		}
+
+		/// <summary>
+		/// Handles hooks to the <see cref="Player"/> class, or classes that reference it.
+		/// </summary>
+		internal class MechanicHooks
+		{
+			internal static void ApplyHooks()
 			{
-				On.Player.ctor += MechanicHooks.Player_ctor;
-				IL.Player.Update += MechanicHooks.Player_Update1;
-				IL.Player.Collide += MechanicHooks.Player_Collide;
-				IL.Player.SlugSlamConditions += MechanicHooks.Player_SlugSlamConditions;
-				IL.Player.GrabUpdate += MechanicHooks.Player_GrabUpdate;
-				On.Player.Grabability += MechanicHooks.Player_Grabability;
-				On.Player.GraspsCanBeCrafted += MechanicHooks.Player_GraspsCanBeCrafted;
-				On.Player.CanEatMeat += MechanicHooks.Player_CanEatMeat;
-				On.Player.BiteEdibleObject += MechanicHooks.Player_BiteEdibleObject;
-				On.Player.CanBeSwallowed += MechanicHooks.Player_CanBeSwallowed;
-				IL.Player.SwallowObject += MechanicHooks.Player_SwallowObject;
-				IL.Player.SpitUpCraftedObject += MechanicHooks.Player_SpitUpCraftedObject;
-				IL.Player.CraftingResults += MechanicHooks.Player_CraftingResults;
-				IL.Player.ClassMechanicsSpearmaster += MechanicHooks.Player_ClassMechanicsSpearmaster;
-				IL.Player.ClassMechanicsArtificer += MechanicHooks.Player_ClassMechanicsArtificer;
-
-				On.Spear.Spear_NeedleCanFeed += MechanicHooks.Spear_Spear_NeedleCanFeed;
-				On.Spear.HitSomethingWithoutStopping += MechanicHooks.Spear_HitSomethingWithoutStopping;
-				IL.Spear.HitSomething += MechanicHooks.Spear_HitSomething;
-				IL.SeedCob.HitByWeapon += MechanicHooks.SeedCob_HitByWeapon;
-				IL.SeedCob.Update += MechanicHooks.SeedCob_Update;
-
-				On.PlayerGraphics.ctor += GraphicHooks.PlayerGraphics_ctor;
-				On.PlayerGraphics.Update += GraphicHooks.PlayerGraphics_Update;
-				IL.PlayerGraphics.InitiateSprites += GraphicHooks.IL_PlayerGraphics_InitiateSprites;
-				On.PlayerGraphics.AddToContainer += GraphicHooks.PlayerGraphics_AddToContainer;
-				On.PlayerGraphics.ApplyPalette += GraphicHooks.PlayerGraphics_ApplyPalette;
-				IL.PlayerGraphics.DefaultBodyPartColorHex += GraphicHooks.PlayerGraphics_DefaultBodyPartColorHex;
-				IL.PlayerGraphics.ColoredBodyPartList += GraphicHooks.PlayerGraphics_ColoredBodyPartList;
-				On.PlayerGraphics.DrawSprites += GraphicHooks.PlayerGraphics_DrawSprites;
-				On.PlayerGraphics.DefaultFaceSprite_float_int += GraphicHooks.PlayerGraphics_DefaultFaceSprite;
-				On.PlayerGraphics.SaintFaceCondition += GraphicHooks.PlayerGraphics_SaintFaceCondition;
-				On.PlayerGraphics.TailSpeckles.DrawSprites += GraphicHooks.TailSpeckles_DrawSprites;
-
-				On.Spear.DrawSprites += GraphicHooks.Spear_DrawSprites;
-				On.Spear.Umbilical.ApplyPalette += GraphicHooks.Spear_Umbilical_ApplyPalette;
+				GeneralHooks.Apply();
+				SpearmasterHooks.Apply();
+				ArtificerHooks.Apply();
+				GourmandHooks.Apply();
 			}
 
-			/// <summary>
-			/// Handles hooks to the <see cref="Player"/> class.
-			/// </summary>
-			internal class MechanicHooks
+			internal class GeneralHooks
 			{
+				internal static void Apply()
+				{
+					On.Player.ctor += Initialize;
+					On.Player.GraspsCanBeCrafted += GraspsFeatureConditions;
+					On.Player.CanBeSwallowed += CanPlayerSwallow;
+				}
+
 				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to spawn with a stomach object upon campaign start.
+				/// Sets <see cref="SlugBase.Features"/> values and allows <see cref="SlugBaseCharacter"/> to spawn with a stomach object upon campaign start.
 				/// </summary>
-				internal static void Player_ctor(On.Player.orig_ctor orig, Player self, AbstractCreature abstractCreature, World world)
+				private static void Initialize(On.Player.orig_ctor orig, Player self, AbstractCreature abstractCreature, World world)
 				{
 					orig(self, abstractCreature, world);
 
-					if (self.room != null && self.room.game.IsStorySession && self.room.game.GetStorySession.saveState.cycleNumber == 0 && GameFeatures.StartRoom.TryGet(self.room.game, out string[] rooms) && rooms != null && rooms.Contains(self.room.game.GetStorySession.saveState.denPosition) && Resources.spawnStomachObject.TryGet(self.room.game, out var objValues) && objValues != null)
+					if (self.room != null && self.room.game.IsStorySession && self.room.game.GetStorySession.saveState.cycleNumber == 0 && GameFeatures.StartRoom.TryGet(self.room.game, out string[] rooms) && rooms != null && rooms.Contains(self.room.game.GetStorySession.saveState.denPosition) && self.room.game.HasFeature(ExtFeatures.spawnStomachObject, out var objValues) && objValues != null)
 					{
 						if (objValues.Keys.Count > 0)
 						{
 							AbstractPhysicalObject obj = null;
 							foreach (var key in objValues.Keys)
 							{
-								if (objValues[key] != null)
-								{
-									obj = Resources.ParseDictToObject(self.room, key, objValues[key]);
-								}
-								if (obj != null)
+								if (objValues[key] != null && Resources.ParseDictToObject(out obj, self.room, key, objValues[key]))
 								{
 									self.objectInStomach = obj;
 									break;
@@ -92,26 +70,66 @@ namespace ExtendedSlugbaseFeatures
 				}
 
 				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to inflict damage to creatures with slamming.
+				/// Allows <see cref="SlugBaseCharacter"/> to use various craft features.
 				/// </summary>
-				internal static void Player_Collide(ILContext il)
+				private static bool GraspsFeatureConditions(On.Player.orig_GraspsCanBeCrafted orig, Player self)
+				{
+					return orig(self) || (self.HasFeature(ExtFeatures.explosiveCraftCost, out var explosiveCost) && explosiveCost[0] > -1 &&
+						((explosiveCost.Length < 2 && self.FoodInStomach > 0) || (explosiveCost.Length >= 2 && self.FoodInStomach >= explosiveCost[1]))
+						&& (explosiveCost.Length < 3 || self.input[0].y == explosiveCost[2])
+						&& self.CraftingResults() != null
+						&& (self.TrueForSlugbase(ExtFeatures.rowsAndColumnsSpearSpecks, false)
+						|| ((self.graphicsModule as PlayerGraphics).tailSpecks != null && (self.graphicsModule as PlayerGraphics).tailSpecks.spearProg == 0f)));
+				}
+
+				/// <summary>
+				/// Allows <see cref="SlugBaseCharacter"/> to ignore checks for swallowing objects.
+				/// </summary>
+				private static bool CanPlayerSwallow(On.Player.orig_CanBeSwallowed orig, Player self, PhysicalObject testObj)
+				{
+					return (self.TrueForSlugbase(ExtFeatures.cantSwallowObjects, false) && orig(self, testObj)) || orig(self, testObj);
+				}
+			}
+
+
+			/// <summary>
+			/// Applies <see cref="MoreSlugcatsEnums.SlugcatStatsName.Spear"/> specific Hooks.
+			/// </summary>
+			internal class SpearmasterHooks
+			{
+				// Shorthand for an otherwise longly-typed method
+				private static bool TryNext(ILCursor cursor)
+				{
+					return cursor.MoveToNextSlugcat(typeof(MoreSlugcatsEnums.SlugcatStatsName).GetField(nameof(MoreSlugcatsEnums.SlugcatStatsName.Spear)));
+				}
+				// Various IL bools that we'd insert onto the stack
+				private static bool EatsWithMouth(bool result, Player player)
+				{
+					return result && !(player.TrueForSlugbase(ExtFeatures.rowsAndColumnsSpearSpecks) && player.TrueForSlugbase(ExtFeatures.forceFeedingFromSpears));
+				}
+				private static bool HasSpearSpecks(bool result, Player player)
+				{
+					return result || player.TrueForSlugbase(ExtFeatures.rowsAndColumnsSpearSpecks);
+				}
+				private static bool CanSwallow(bool result, Player player)
+				{
+					return result && player.TrueForSlugbase(ExtFeatures.cantSwallowObjects, false);
+				}
+
+				internal static void Apply()
 				{
 					try
 					{
-						ILCursor cursor = new(il);
-
-						cursor.GotoNext(MoveType.After,
-							x => x.MatchCallOrCallvirt<Player>(typeof(Player).GetProperty(nameof(Player.isGourmand), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).GetGetMethod().Name));
-						cursor.MoveAfterLabels();
-
-						cursor.Emit(OpCodes.Ldarg_0);
-						cursor.EmitDelegate(Resources.ILSlam);
-
-						// if (this.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Gourmand && this.animation == Player.AnimationIndex.Roll && this.gourmandAttackNegateTime <= 0)
-						cursor.MoveCursorToNextSlugcatInstance(x => x.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Gourmand)));
-
-						cursor.Emit(OpCodes.Ldarg_0);
-						cursor.EmitDelegate(Resources.ILSlam);
+						IL.Player.GrabUpdate += Player_GrabUpdate;
+						On.Player.CanEatMeat += Player_CanEatMeat;
+						On.Player.Grabability += Player_Grabability;
+						On.Player.BiteEdibleObject += Player_BiteEdibleObject;
+						IL.Player.ClassMechanicsSpearmaster += Player_ClassMechanicsSpearmaster;
+						On.Spear.Spear_NeedleCanFeed += NeedleCanFeed;
+						On.Spear.HitSomethingWithoutStopping += SpearHitSomethingNoStopDiet;
+						IL.Spear.HitSomething += SpearHitSomethingDiet;
+						IL.SeedCob.HitByWeapon += SeedCobReactToFeedSpear;
+						IL.SeedCob.Update += SeedCobReactToSpear;
 					}
 					catch (Exception ex)
 					{
@@ -119,112 +137,37 @@ namespace ExtendedSlugbaseFeatures
 					}
 				}
 
-				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to inflict damage to creatures with slamming.
-				/// </summary>
-				internal static void Player_SlugSlamConditions(ILContext il)
+				private static void Player_GrabUpdate(ILContext il)
 				{
 					try
 					{
 						ILCursor cursor = new(il);
 
-						// if (this.SlugCatClass != MoreSlugcatsEnums.SlugcatStatsName.Gourmand)
-						cursor.MoveCursorToNextSlugcatInstance(x => x.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Gourmand)));
-
-						cursor.Emit(OpCodes.Ldarg_0);
-						static bool CanSlam(bool isNotGourm, Player player)
+						if (TryNext(cursor)) // PlayerGraphics.TailSpeckles tailSpecks = (base.graphicsModule as PlayerGraphics).tailSpecks; 
 						{
-							return isNotGourm && !player.HasFeature(Resources.canSlam);
+							cursor.ImplementILCodeAssumingLdarg0(HasSpearSpecks);
 						}
-						cursor.EmitDelegate(CanSlam);
-					}
-					catch (Exception ex)
-					{
-						UnityEngine.Debug.LogException(ex);
-					}
-				}
-
-				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to gain karma from holding scavenger corpses.
-				/// </summary>
-				internal static void Player_Update1(ILContext il)
-				{
-					try
-					{
-						ILCursor cursor = new(il);
-
-						for (int i = 0; i < 3; i++)
+						if (TryNext(cursor)) // if (base.grasps[num8] != null && base.grasps[num8].grabbed is IPlayerEdible && (base.grasps[num8].grabbed as IPlayerEdible).Edible)
 						{
-							// else if (ModManager.MSC && this.room.game.StoryCharacter == MoreSlugcatsEnums.SlugcatStatsName.Artificer && this.slugcatStats.name == MoreSlugcatsEnums.SlugcatStatsName.Artificer && this.AI == null && this.room.game.cameras[0] != null && this.room.game.cameras[0].hud != null && this.room.game.cameras[0].hud.karmaMeter != null)
-							cursor.MoveCursorToNextSlugcatInstance(x => x.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Artificer)));
-
-							if (i != 0)
-							{
-								cursor.Emit(OpCodes.Ldarg_0);
-								cursor.EmitDelegate(Resources.ILScavCorpseKarma);
-							}
+							cursor.ImplementILCodeAssumingLdarg0(EatsWithMouth);
 						}
-					}
-					catch (Exception ex)
-					{
-						UnityEngine.Debug.LogException(ex);
-					}
-				}
-
-				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to make spears and craft explosives.
-				/// </summary>
-				internal static void Player_GrabUpdate(ILContext il)
-				{
-					try
-					{
-						ILCursor spearCursor = new(il);
-						// if (ModManager.MSC && !this.input[0].pckp && this.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Spear)
-						spearCursor.MoveCursorToNextSlugcatInstance(x => x.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Spear)));
-
-						spearCursor.Emit(OpCodes.Ldarg_0);
-						spearCursor.EmitDelegate(Resources.ILSpearSpecks);
-
-						for (int i = 0; i < 4; i++)
+						if (TryNext(cursor)) // while (num5 < 0 && num8 < 2 && (!ModManager.MSC || this.SlugCatClass != MoreSlugcatsEnums.SlugcatStatsName.Spear))
 						{
-							// if (ModManager.MSC && this.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Spear && (base.grasps[0] == null || base.grasps[1] == null) && num5 == -1 && this.input[0].y == 0)
-							spearCursor.MoveCursorToNextSlugcatInstance(x => x.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Spear)));
-
-							if (i == 0)
+							cursor.ImplementILCodeAssumingLdarg0(CanSwallow);
+						}
+						if (TryNext(cursor)) // if (ModManager.MSC && this.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Spear && (base.grasps[0] == null || base.grasps[1] == null) && num5 == -1 && this.input[0].y == 0)
+						{
+							cursor.Emit(OpCodes.Ldarg_0);
+							static bool CanSpawnSpearsDualWield(bool isSpear, Player player)
 							{
-								// while (num5 < 0 && num8 < 2 && (!ModManager.MSC || this.SlugCatClass != MoreSlugcatsEnums.SlugcatStatsName.Spear))
-								spearCursor.Emit(OpCodes.Ldarg_0);
-								static bool FeedsFromSpears(bool isNotSpear, Player player)
-								{
-									return isNotSpear && !player.HasFeature(Resources.feedFromSpears);
-								}
-								spearCursor.EmitDelegate(FeedsFromSpears);
+								return isSpear || (player.TrueForSlugbase(ExtFeatures.rowsAndColumnsSpearSpecks) && (player.TrueForSlugbase(ExtFeatures.canDualWield) || (player.FreeHand() != -1 && !player.grasps.Any(x => x != null && x.grabbed is Spear))));
 							}
-							if (i == 1)
+							cursor.EmitDelegate(CanSpawnSpearsDualWield);
+
+							if (cursor.TryGotoNext(x => x.MatchLdarg(0),
+								x => x.MatchCallOrCallvirt(typeof(Player).GetProperty(nameof(Player.input), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).GetGetMethod())))
 							{
-								// else if ((num7 > -1 || this.objectInStomach != null || this.isGourmand) && (!ModManager.MSC || this.SlugCatClass != MoreSlugcatsEnums.SlugcatStatsName.Spear))
-								spearCursor.Emit(OpCodes.Ldarg_0);
-								static bool CantSwallowObjects(bool isNotSpear, Player player)
-								{
-									return isNotSpear && !player.HasFeature(Resources.cantSwallowObjects);
-								}
-								spearCursor.EmitDelegate(CantSwallowObjects);
-							}
-
-							if (i == 2)
-							{
-								spearCursor.Emit(OpCodes.Ldarg_0);
-								static bool CanSpawnSpearsDualWield(bool isSpear, Player player)
-								{
-									return isSpear ||
-										(player.HasFeature(Resources.spearSpecks) && (player.HasFeature(Resources.dualWield) || (player.FreeHand() != -1 && !player.grasps.Any(x => x != null && x.grabbed is Spear))));
-								}
-								spearCursor.EmitDelegate(CanSpawnSpearsDualWield);
-
-								spearCursor.GotoNext(x => x.MatchLdarg(0),
-									x => x.MatchCallOrCallvirt<Player>(typeof(Player).GetProperty(nameof(Player.input), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).GetGetMethod().Name));
-
-								ILCursor spearJumpCursor = spearCursor.Clone();
+								ILCursor spearJumpCursor = cursor.Clone();
 
 								spearJumpCursor.GotoNext(x => x.MatchBrtrue(out _));
 								ILLabel boolJump = spearJumpCursor.Next.Operand as ILLabel;
@@ -232,75 +175,55 @@ namespace ExtendedSlugbaseFeatures
 
 								ILLabel jumpBr = spearJumpCursor.MarkLabel();
 
-								spearCursor.Emit(OpCodes.Br, jumpBr);
+								cursor.Emit(OpCodes.Br, jumpBr);
 								spearJumpCursor.Emit(OpCodes.Ldarg_0);
 								static bool CustomInputChecks(Player player)
 								{
-									return player.eatMeat <= 0 && (((player.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Spear || player.HasFeature(Resources.cantSwallowObjects)) && player.input[0].y == 0) 
-										|| (!player.HasFeature(Resources.cantSwallowObjects) && player.input[0].y == 1));
+									return player.eatMeat <= 0 && (player.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Spear || (player.TrueForSlugbase(ExtFeatures.cantSwallowObjects) && player.input[0].y == 0) || (player.TrueForSlugbase(ExtFeatures.cantSwallowObjects, false) && player.input[0].y == 1));
 								}
 								spearJumpCursor.EmitDelegate(CustomInputChecks);
 								spearJumpCursor.Emit(OpCodes.Brfalse, boolJump);
 
-								spearCursor.GotoNext(MoveType.After,
+								if (cursor.TryGotoNext(MoveType.After,
 									x => x.MatchNewobj<AbstractSpear>(),
-									x => x.MatchStloc(19));
-
-								spearCursor.Emit(OpCodes.Ldarg_0);
-								spearCursor.Emit(OpCodes.Ldloc, 19);
-								static void GetSpearCWT(Player player, AbstractSpear self)
+									x => x.MatchStloc(19)))
 								{
-									GraphicHooks.SpearValues cwt = GraphicHooks.spearCWT.GetOrCreateValue(self);
-									if (cwt != null)
+									cursor.Emit(OpCodes.Ldarg_0);
+									cursor.Emit(OpCodes.Ldloc, 19);
+									static void GetSpearCWT(Player player, AbstractSpear self)
 									{
-										if (SlugBaseCharacter.TryGet(player.SlugCatClass, out var character) && PlayerFeatures.CustomColors.TryGet(character, out var slots) && slots.Length > 1)
+										SpearValues cwt = spearCWT.GetOrCreateValue(self);
+										if (cwt != null)
 										{
-											ColorSlot slot = slots.Where(x => x.Name == "Spears").FirstOrDefault();
-											if (slot != null)
+											if (SlugBaseCharacter.TryGet(player.SlugCatClass, out var character) && PlayerFeatures.CustomColors.TryGet(character, out var slots) && slots.Length > 1)
 											{
-												if (player.room != null && player.room.game.IsArenaSession && slot.Variants != null)
+												ColorSlot slot = slots.Where(x => x.Name == "Spears").FirstOrDefault();
+												if (slot != null)
 												{
-													int playerNum = player.playerState.playerNumber;
-													if (slot.Variants.Length >= playerNum + 1)
+													if (player.room != null && player.room.game.IsArenaSession && slot.Variants != null)
 													{
-														cwt.slugColor = slot.Variants[playerNum];
+														int playerNum = player.playerState.playerNumber;
+														if (slot.Variants.Length >= playerNum + 1)
+														{
+															cwt.slugColor = slot.Variants[playerNum];
+														}
 													}
-												}
-												else if (slot.Default != null)
-												{
-													cwt.slugColor = slot.Default;
+													else if (slot.Default != null)
+													{
+														cwt.slugColor = slot.Default;
+													}
 												}
 											}
 										}
 									}
+									cursor.EmitDelegate(GetSpearCWT);
 								}
-								spearCursor.EmitDelegate(GetSpearCWT);
-
-							}
-
-							if (i == 3)
-							{
-								spearCursor.Emit(OpCodes.Ldarg_0);
-								static bool CantSwallow(bool isSpear, Player player)
-								{
-									return isSpear || player.HasFeature(Resources.cantSwallowObjects);
-								}
-								spearCursor.EmitDelegate(CantSwallow);
 							}
 						}
-
-							ILCursor artiCursor = new(il);
-						// if (ModManager.MSC && (this.FreeHand() == -1 || this.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Artificer) && this.GraspsCanBeCrafted())
-						artiCursor.MoveCursorToNextSlugcatInstance(x => x.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Artificer)));
-
-						artiCursor.Emit(OpCodes.Ldarg_0);
-						artiCursor.EmitDelegate(Resources.ILCraftExplosives);
-
-						// if (!ModManager.MSC || this.SlugCatClass != MoreSlugcatsEnums.SlugcatStatsName.Artificer || !(base.grasps[num20].grabbed is Scavenger))
-						artiCursor.MoveCursorToNextSlugcatInstance(x => x.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Artificer)));
-
-						artiCursor.Emit(OpCodes.Ldarg_0);
-						artiCursor.EmitDelegate(Resources.ILExplosiveJump);
+						if (TryNext(cursor)) // else if ((num7 > -1 || this.objectInStomach != null || this.isGourmand) && (!ModManager.MSC || this.SlugCatClass != MoreSlugcatsEnums.SlugcatStatsName.Spear))
+						{
+							cursor.ImplementILCodeAssumingLdarg0(CanSwallow);
+						}
 					}
 					catch (Exception ex)
 					{
@@ -308,12 +231,17 @@ namespace ExtendedSlugbaseFeatures
 					}
 				}
 
-				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to dual wield.
-				/// </summary>
-				internal static Player.ObjectGrabability Player_Grabability(On.Player.orig_Grabability orig, Player self, PhysicalObject obj)
+				private static bool Player_CanEatMeat(On.Player.orig_CanEatMeat orig, Player self, Creature crit)
 				{
-					if (obj is Spear && self.HasFeature(Resources.dualWield))
+					if (self.TrueForSlugbase(ExtFeatures.forceFeedingFromSpears))
+						return false;
+
+					return orig(self, crit);
+				}
+
+				private static Player.ObjectGrabability Player_Grabability(On.Player.orig_Grabability orig, Player self, PhysicalObject obj)
+				{
+					if (obj is Spear && self.TrueForSlugbase(ExtFeatures.canDualWield))
 					{
 						return Player.ObjectGrabability.OneHand;
 					}
@@ -321,150 +249,29 @@ namespace ExtendedSlugbaseFeatures
 					return orig(self, obj);
 				}
 
-				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to craft explosives.
-				/// </summary>
-				internal static bool Player_GraspsCanBeCrafted(On.Player.orig_GraspsCanBeCrafted orig, Player self)
+				private static void Player_BiteEdibleObject(On.Player.orig_BiteEdibleObject orig, Player self, bool eu)
 				{
-					return orig(self) || (self.HasFeature(Resources.explosionCraft) && self.CraftingResults() != null && (!self.HasFeature(Resources.spearSpecks) || ((self.graphicsModule as PlayerGraphics).tailSpecks != null && (self.graphicsModule as PlayerGraphics).tailSpecks.spearProg == 0f)));
-				}
-
-				/// <summary>
-				/// If <see cref="SlugBaseCharacter"/> feeds from spears, ensure they cannot bite objects.
-				/// </summary>
-				internal static void Player_BiteEdibleObject(On.Player.orig_BiteEdibleObject orig, Player self, bool eu)
-				{
-					if (self.HasFeature(Resources.feedFromSpears))
+					if (self.TrueForSlugbase(ExtFeatures.forceFeedingFromSpears))
 						return;
 
 					orig(self, eu);
 				}
 
-				/// <summary>
-				/// If <see cref="SlugBaseCharacter"/> feeds from spears, ensure they cannot eat creatures by mouth.
-				/// </summary>
-				internal static bool Player_CanEatMeat(On.Player.orig_CanEatMeat orig, Player self, Creature crit)
+				private static void Player_ClassMechanicsSpearmaster(ILContext il)
 				{
-					if (self.HasFeature(Resources.feedFromSpears))
-						return false;
-
-					return orig(self, crit);
-				}
-
-				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to convert objects into explosives.
-				/// </summary>
-				internal static void Player_SwallowObject(ILContext il)
-				{
-					try
+					ILCursor cursor = new(il);
+					// if ((base.stun >= 1 || base.dead) && this.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Spear)
+					if (cursor.MoveToNextSlugcat(typeof(MoreSlugcatsEnums.SlugcatStatsName).GetField(nameof(MoreSlugcatsEnums.SlugcatStatsName.Spear))))
 					{
-						ILCursor cursor = new(il);
-						// if (ModManager.MSC && this.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Artificer && this.FoodInStomach > 0)
-						cursor.MoveCursorToNextSlugcatInstance(x => x.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Artificer)));
-
-						cursor.Emit(OpCodes.Ldarg_0);
-						cursor.EmitDelegate(Resources.ILCraftExplosives);
-					}
-					catch (Exception ex)
-					{
-						UnityEngine.Debug.LogException(ex);
+						cursor.ImplementILCodeAssumingLdarg0(HasSpearSpecks);
 					}
 				}
-
-				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to ignore checks for swallowing objects.
-				/// </summary>
-				internal static bool Player_CanBeSwallowed(On.Player.orig_CanBeSwallowed orig, Player self, PhysicalObject testObj)
-				{
-					return (!self.HasFeature(Resources.cantSwallowObjects) && orig(self, testObj)) || orig(self,testObj);
-				}
-
-				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to craft explosives.
-				/// </summary>
-				internal static void Player_SpitUpCraftedObject(ILContext il)
-				{
-					try
-					{
-						ILCursor cursor = new(il);
-						// if (this.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Artificer)
-						cursor.MoveCursorToNextSlugcatInstance(x => x.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Artificer)));
-
-						cursor.Emit(OpCodes.Ldarg_0);
-						cursor.EmitDelegate(Resources.ILCraftExplosives);
-					}
-					catch (Exception ex)
-					{
-						UnityEngine.Debug.LogException(ex);
-					}
-				}
-
-				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to craft explosives.
-				/// </summary>
-				internal static void Player_CraftingResults(ILContext il)
-				{
-					try
-					{
-						ILCursor cursor = new(il);
-						// if (this.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Artificer)
-						cursor.MoveCursorToNextSlugcatInstance(x => x.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Artificer)));
-
-						cursor.Emit(OpCodes.Ldarg_0);
-						cursor.EmitDelegate(Resources.ILCraftExplosives);
-					}
-					catch (Exception ex)
-					{
-						UnityEngine.Debug.LogException(ex);
-					}
-				}
-
-				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to use Spearmaster mechanics.
-				/// </summary>
-				internal static void Player_ClassMechanicsSpearmaster(ILContext il)
-				{
-					try
-					{
-						ILCursor cursor = new(il);
-						// if ((base.stun >= 1 || base.dead) && this.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Spear)
-						cursor.MoveCursorToNextSlugcatInstance(x => x.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Spear)));
-
-						cursor.Emit(OpCodes.Ldarg_0);
-						cursor.EmitDelegate(Resources.ILSpearSpecks);
-					}
-					catch (Exception ex)
-					{
-						UnityEngine.Debug.LogException(ex);
-					}
-				}
-
-				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to use Artificer mechanics.
-				/// </summary>
-				internal static void Player_ClassMechanicsArtificer(ILContext il)
-				{
-					try
-					{
-						ILCursor cursor = new(il);
-						// if (this.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Artificer || (ExpeditionGame.explosivejump && !this.isSlugpup))
-						cursor.MoveCursorToNextSlugcatInstance(x => x.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Artificer)));
-
-						cursor.Emit(OpCodes.Ldarg_0);
-						cursor.EmitDelegate(Resources.ILExplosiveJump);
-					}
-					catch (Exception ex)
-					{
-						UnityEngine.Debug.LogException(ex);
-					}
-				}
-
 				/// <summary>
 				/// Returns true if <see cref="SlugBaseCharacter"/> feeds from spears.
 				/// </summary>
-				internal static bool Spear_Spear_NeedleCanFeed(On.Spear.orig_Spear_NeedleCanFeed orig, Spear self)
+				private static bool NeedleCanFeed(On.Spear.orig_Spear_NeedleCanFeed orig, Spear self)
 				{
-					if (ModManager.MSC && self.thrownBy != null && self.thrownBy is Player player && player.HasFeature(Resources.feedFromSpears))
+					if (ModManager.MSC && self.thrownBy != null && self.thrownBy is Player player && player.TrueForSlugbase(ExtFeatures.forceFeedingFromSpears))
 					{
 						return self.spearmasterNeedle && self.spearmasterNeedle_hasConnection;
 					}
@@ -474,7 +281,7 @@ namespace ExtendedSlugbaseFeatures
 				/// <summary>
 				/// Allows <see cref="SlugBaseCharacter"/> to feed from Spearmaster needles dynamically.
 				/// </summary>
-				internal static void Spear_HitSomethingWithoutStopping(On.Spear.orig_HitSomethingWithoutStopping orig, Spear self, PhysicalObject obj, BodyChunk chunk, PhysicalObject.Appendage appendage)
+				private static void SpearHitSomethingNoStopDiet(On.Spear.orig_HitSomethingWithoutStopping orig, Spear self, PhysicalObject obj, BodyChunk chunk, PhysicalObject.Appendage appendage)
 				{
 					if (self.Spear_NeedleCanFeed() && self.thrownBy is Player player && PlayerFeatures.Diet.TryGet(player, out var diet))
 					{
@@ -486,7 +293,7 @@ namespace ExtendedSlugbaseFeatures
 
 						if (obj is Creature creature && !creature.dead)
 						{
-							Resources.HandleFood(player, diet.GetMeatMultiplier(player, creature));
+							player.ProcessFood(diet.GetMeatMultiplier(player, creature));
 						}
 						if (obj is Mushroom)
 						{
@@ -530,7 +337,7 @@ namespace ExtendedSlugbaseFeatures
 
 							if (diet.GetFoodMultiplier(swarmer) > 0f)
 							{
-								Resources.HandleFood(player, diet.GetFoodMultiplier(swarmer));
+								player.ProcessFood(diet.GetFoodMultiplier(swarmer));
 								player.glowing = true;
 								if (self.room.game.IsStorySession)
 								{
@@ -555,10 +362,10 @@ namespace ExtendedSlugbaseFeatures
 						}
 						else if (obj is IPlayerEdible edible && edible.Edible)
 						{
-							Resources.HandleFood(player, diet.GetFoodMultiplier(obj));
+							player.ProcessFood(diet.GetFoodMultiplier(obj));
 							obj.Destroy();
 						}
-						
+
 						return;
 					}
 
@@ -568,7 +375,7 @@ namespace ExtendedSlugbaseFeatures
 				/// <summary>
 				/// Allows <see cref="SlugBaseCharacter"/> to feed from Spearmaster needles dynamically.
 				/// </summary>
-				internal static void Spear_HitSomething(ILContext il)
+				private static void SpearHitSomethingDiet(ILContext il)
 				{
 					try
 					{
@@ -584,6 +391,7 @@ namespace ExtendedSlugbaseFeatures
 							x => x.MatchRet());
 						ILLabel jumpTo = jumpCursor.MarkLabel();
 
+						cursor.MoveAfterLabels(); // This tells every past label pointing to our cursor to change to move to OUR code first wowie :D
 						cursor.Emit(OpCodes.Ldarg_0);
 						ILCursor previousJumpCursor = cursor.Clone();
 						cursor.Emit(OpCodes.Ldarg_1);
@@ -600,18 +408,18 @@ namespace ExtendedSlugbaseFeatures
 									multiplier = diet.CreatureOverrides.TryGetValue(creature.Template.type, out var mult) ? mult : diet.Meat;
 									if (!creature.dead && multiplier > 0f)
 									{
-										fed = Resources.HandleFood(player, multiplier);
+										fed = player.ProcessFood(multiplier);
 										creature.State.meatLeft -= creature.Template.meatPoints > 0 ? 1 : 0;
 									}
 									if (creature.dead && diet.Corpses > 0f && creature.State.meatLeft > 0)
 									{
-										fed = Resources.HandleFood(player, diet.GetMeatMultiplier(player, creature));
+										fed = player.ProcessFood(diet.GetMeatMultiplier(player, creature));
 										creature.State.meatLeft--;
 									}
 								}
 								if (result.obj is IPlayerEdible edible && edible.Edible && result.obj is not GooieDuck && diet.GetFoodMultiplier(result.obj) > 0f)
 								{
-									fed = Resources.HandleFood(player, diet.GetFoodMultiplier(result.obj));
+									fed = player.ProcessFood(diet.GetFoodMultiplier(result.obj));
 									if (result.obj is DangleFruit fruit && fruit.stalk != null)
 									{
 										for (int i = 0; i < fruit.stalk.segs.GetLength(0); i++)
@@ -654,29 +462,29 @@ namespace ExtendedSlugbaseFeatures
 										self.stuckInChunkIndex = 0;
 									}
 								}
-                                if (result.obj is SeedCob popCorn && diet.GetFoodMultiplier(popCorn) > 0f)
-                                {
+								if (result.obj is SeedCob popCorn && diet.GetFoodMultiplier(popCorn) > 0f)
+								{
 									popCorn.Open();
-									fed = Resources.HandleFood(player, diet.GetFoodMultiplier(popCorn));
+									fed = player.ProcessFood(diet.GetFoodMultiplier(popCorn));
 								}
 								if (result.obj is JellyFish jelly)
 								{
 									if (jelly.dead && diet.Corpses > 0f)
 									{
-										fed = Resources.HandleFood(player, diet.GetFoodMultiplier(jelly));
+										fed = player.ProcessFood(diet.GetFoodMultiplier(jelly));
 										jelly.Destroy();
 									}
 									else if (!jelly.dead)
 									{
-										fed = Resources.HandleFood(player, diet.GetFoodMultiplier(jelly));
+										fed = player.ProcessFood(diet.GetFoodMultiplier(jelly));
 										jelly.dead = true;
 									}
 								}
-                                if (result.obj is Pomegranate pomegranate && pomegranate.smashed)
-                                {
-									fed = Resources.HandleFood(player, diet.GetFoodMultiplier(pomegranate));
+								if (result.obj is Pomegranate pomegranate && pomegranate.smashed)
+								{
+									fed = player.ProcessFood(diet.GetFoodMultiplier(pomegranate));
 									pomegranate.spearmasterStabbed = true;
-                                }
+								}
 
 								if (fed && self.room.game.IsStorySession && self.room.game.GetStorySession.playerSessionRecords != null)
 								{
@@ -696,52 +504,6 @@ namespace ExtendedSlugbaseFeatures
 						}
 						cursor.EmitDelegate(SlugbaseFoodConditions);
 						cursor.Emit(OpCodes.Brtrue, jumpTo);
-
-						previousJumpCursor.GotoPrev(x => x.MatchLdarg(0));
-						ILLabel changeJump = previousJumpCursor.MarkLabel();
-
-						previousJumpCursor.GotoPrev(MoveType.After,
-							x => x.MatchBr(out _),
-							x => x.MatchLdarg(1),
-							x => x.MatchLdfld<SharedPhysics.CollisionResult>(nameof(SharedPhysics.CollisionResult.onAppendagePos)));
-						previousJumpCursor.Next.Operand = changeJump;
-
-						previousJumpCursor.GotoPrev(x => x.MatchBr(out _));
-						previousJumpCursor.Next.Operand = changeJump;
-
-						previousJumpCursor.GotoPrev(MoveType.After,
-							x => x.MatchBr(out _),
-							x => x.MatchLdarg(1),
-							x => x.MatchLdfld<SharedPhysics.CollisionResult>(nameof(SharedPhysics.CollisionResult.chunk)));
-						previousJumpCursor.Next.Operand = changeJump;
-
-						previousJumpCursor.GotoPrev(x => x.MatchBr(out _));
-						previousJumpCursor.Next.Operand = changeJump;
-
-						previousJumpCursor.GotoPrev(x => x.MatchBltUn(out _));
-						previousJumpCursor.Next.Operand = changeJump;
-
-						previousJumpCursor.GotoPrev(MoveType.After,
-							x => x.MatchLdarg(1),
-							x => x.MatchLdfld<SharedPhysics.CollisionResult>(nameof(SharedPhysics.CollisionResult.obj)),
-							x => x.MatchIsinst<Player>());
-						previousJumpCursor.Next.Operand = changeJump;
-
-						previousJumpCursor.GotoPrev(x => x.MatchBrfalse(out _));
-						previousJumpCursor.Next.Operand = changeJump;
-
-						previousJumpCursor.GotoPrev(x => x.MatchBrfalse(out _));
-						previousJumpCursor.Next.Operand = changeJump;
-
-						previousJumpCursor.GotoPrev(MoveType.After,
-							x => x.MatchStloc(1),
-							x => x.MatchLdarg(1),
-							x => x.MatchLdfld<SharedPhysics.CollisionResult>(nameof(SharedPhysics.CollisionResult.obj)),
-							x => x.MatchIsinst<Creature>());
-
-						previousJumpCursor.Next.Operand = changeJump;
-
-						UnityEngine.Debug.Log(il.ToString());
 					}
 					catch (Exception ex)
 					{
@@ -752,20 +514,21 @@ namespace ExtendedSlugbaseFeatures
 				/// <summary>
 				/// Disallows <see cref="SlugBaseCharacter"/> to pop <see cref="SeedCob"/> objects if they feed from needles.
 				/// </summary>
-				internal static void SeedCob_HitByWeapon(ILContext il)
+				private static void SeedCobReactToFeedSpear(ILContext il)
 				{
 					try
 					{
 						ILCursor cursor = new(il);
 
-						cursor.MoveCursorToNextSlugcatInstance(x => x.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Spear)));
-
-						cursor.Emit(OpCodes.Ldarg_1);
-						static bool FeedsOffSpears(bool isSpear, Weapon spear)
+						if (cursor.MoveToNextSlugcat(typeof(MoreSlugcatsEnums.SlugcatStatsName).GetField(nameof(MoreSlugcatsEnums.SlugcatStatsName.Spear))))
 						{
-							return isSpear || (spear.thrownBy is Player player && player.HasFeature(Resources.feedFromSpears));
+							cursor.Emit(OpCodes.Ldarg_1);
+							static bool FeedsOffSpears(bool isSpear, Weapon spear)
+							{
+								return isSpear || (spear.thrownBy is Player player && player.HasFeature(ExtFeatures.forceFeedingFromSpears, out bool flag) && flag);
+							}
+							cursor.EmitDelegate(FeedsOffSpears);
 						}
-						cursor.EmitDelegate(FeedsOffSpears);
 					}
 					catch (Exception ex)
 					{
@@ -776,20 +539,21 @@ namespace ExtendedSlugbaseFeatures
 				/// <summary>
 				/// Disallows <see cref="SlugBaseCharacter"/> to pop <see cref="SeedCob"/> objects if they feed from needles.
 				/// </summary>
-				internal static void SeedCob_Update(ILContext il)
+				private static void SeedCobReactToSpear(ILContext il)
 				{
 					try
 					{
 						ILCursor cursor = new(il);
 
-						cursor.MoveCursorToNextSlugcatInstance(x => x.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Spear)));
-
-						cursor.Emit(OpCodes.Ldloc, 12);
-						static bool FeedsOffSpears(bool isNotSpear, Player player)
+						if (cursor.MoveToNextSlugcat(typeof(MoreSlugcatsEnums.SlugcatStatsName).GetField(nameof(MoreSlugcatsEnums.SlugcatStatsName.Spear))))
 						{
-							return isNotSpear && !player.HasFeature(Resources.feedFromSpears);
+							cursor.Emit(OpCodes.Ldloc, 12);
+							static bool FeedsOffSpears(bool isNotSpear, Player player)
+							{
+								return isNotSpear && (!player.HasFeature(ExtFeatures.forceFeedingFromSpears, out bool flag) || !flag);
+							}
+							cursor.EmitDelegate(FeedsOffSpears);
 						}
-						cursor.EmitDelegate(FeedsOffSpears);
 					}
 					catch (Exception ex)
 					{
@@ -799,46 +563,239 @@ namespace ExtendedSlugbaseFeatures
 			}
 
 			/// <summary>
-			/// Handles hooks to the <see cref="PlayerGraphics"/> class.
+			/// Applies <see cref="MoreSlugcatsEnums.SlugcatStatsName.Artificer"/> specific Hooks.
 			/// </summary>
-			public class GraphicHooks
+			internal class ArtificerHooks
 			{
-				private static Color lastBlackColor;
+				// Shorthand for an otherwise longly-typed method
+				private static bool TryNext(ILCursor cursor)
+				{
+					return cursor.MoveToNextSlugcat(typeof(MoreSlugcatsEnums.SlugcatStatsName).GetField(nameof(MoreSlugcatsEnums.SlugcatStatsName.Artificer)));
+				}
+				// Various IL bools that we'd insert onto the stack
+				private static bool ExplosiveCraft(bool result, Player player)
+				{
+					return result || (player.HasFeature(ExtFeatures.explosiveCraftCost, out var explosiveCost) && (explosiveCost.Length == 1 || explosiveCost[1] == player.FreeHand()));
+				}
+				private static bool ExplosiveJumps(bool result, Player player)
+				{
+					return result || (!player.input[5].pckp && player.TrueForSlugbase(ExtFeatures.explosiveCraftCost));
+				}
+				private static bool NoExplosiveJumps(bool result, Player player)
+				{
+					return result && player.TrueForSlugbase(ExtFeatures.explosiveCraftCost, false);
+				}
+				private static bool ScavCorpseKarma(bool result, Player player)
+				{
+					return result || player.TrueForSlugbase(ExtFeatures.getKarmaFromScavs);
+				}
+
+				internal static void Apply()
+				{
+					try
+					{
+						IL.Player.GrabUpdate += Player_GrabUpdate;
+						IL.Player.Update += Player_Update;
+						IL.Player.SpitUpCraftedObject += Player_SpitUpCraftedObject;
+						IL.Player.CraftingResults += Player_CraftingResults;
+						IL.Player.ClassMechanicsArtificer += Player_ClassMechanicsArtificer;
+					}
+					catch (Exception ex)
+					{
+						UnityEngine.Debug.LogException(ex);
+					}
+				}
+
+				private static void Player_GrabUpdate(ILContext il)
+				{
+					ILCursor cursor = new(il);
+
+					if (TryNext(cursor)) // if (ModManager.MSC && (this.FreeHand() == -1 || this.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Artificer) && this.GraspsCanBeCrafted())
+					{
+						cursor.ImplementILCodeAssumingLdarg0(ExplosiveCraft);
+					}
+					if (TryNext(cursor)) // if (!ModManager.MSC || this.SlugCatClass != MoreSlugcatsEnums.SlugcatStatsName.Artificer || !(base.grasps[num20].grabbed is Scavenger))
+					{
+						cursor.ImplementILCodeAssumingLdarg0(NoExplosiveJumps);
+					}
+				}
+
+				private static void Player_Update(ILContext il)
+				{
+					ILCursor cursor = new(il);
+
+					if (TryNext(cursor)) // base.Hypothermia -= Mathf.Lerp(RainWorldGame.DefaultHeatSourceWarmth, 0f, this.HypothermiaExposure);
+					{
+						// Introduce Artificer warmth mechanic? Likely just better to introduce a general version that's dynamic
+					}
+					if (TryNext(cursor)) // else if (ModManager.MSC && this.room.game.IsStorySession && this.room.game.StoryCharacter == MoreSlugcatsEnums.SlugcatStatsName.Artificer && this.slugcatStats.name == MoreSlugcatsEnums.SlugcatStatsName.Artificer && this.AI == null && this.room.game.cameras[0] != null && this.room.game.cameras[0].hud != null && this.room.game.cameras[0].hud.karmaMeter != null)
+					{
+						cursor.ImplementILCodeAssumingLdarg0(ScavCorpseKarma);
+					}
+					if (TryNext(cursor)) // else if (ModManager.MSC && this.room.game.IsStorySession && this.room.game.StoryCharacter == MoreSlugcatsEnums.SlugcatStatsName.Artificer && this.slugcatStats.name == MoreSlugcatsEnums.SlugcatStatsName.Artificer && this.AI == null && this.room.game.cameras[0] != null && this.room.game.cameras[0].hud != null && this.room.game.cameras[0].hud.karmaMeter != null)
+					{
+						cursor.ImplementILCodeAssumingLdarg0(ScavCorpseKarma);
+					}
+				}
+
+				private static void Player_SpitUpCraftedObject(ILContext il)
+				{
+					ILCursor cursor = new(il);
+
+					if (TryNext(cursor))
+					{
+						cursor.ImplementILCodeAssumingLdarg0(ExplosiveCraft);
+					}
+				}
+
+				private static void Player_CraftingResults(ILContext il)
+				{
+					ILCursor cursor = new(il);
+
+					if (TryNext(cursor))
+					{
+						cursor.ImplementILCodeAssumingLdarg0(ExplosiveCraft);
+					}
+				}
+
+				private static void Player_ClassMechanicsArtificer(ILContext il)
+				{
+					ILCursor cursor = new(il);
+
+					if (TryNext(cursor))
+					{
+						cursor.ImplementILCodeAssumingLdarg0(ExplosiveJumps);
+					}
+				}
+			}
+
+			/// <summary>
+			/// Applies <see cref="MoreSlugcatsEnums.SlugcatStatsName.Gourmand"/> specific Hooks.
+			/// </summary>
+			internal class GourmandHooks
+			{
+				// Shorthand for an otherwise longly-typed method
+				private static bool TryNext(ILCursor cursor)
+				{
+					return cursor.MoveToNextSlugcat(typeof(MoreSlugcatsEnums.SlugcatStatsName).GetField(nameof(MoreSlugcatsEnums.SlugcatStatsName.Gourmand)));
+				}
+				// Various IL bools that we'd insert onto the stack
+				private static bool CanSlam(bool result, Player player)
+				{
+					return result || player.TrueForSlugbase(ExtFeatures.canSlam);
+				}
+				// Various IL bools that we'd insert onto the stack
+				private static bool CannotSlam(bool result, Player player)
+				{
+					return result && player.TrueForSlugbase(ExtFeatures.canSlam, false);
+				}
+
+				internal static void Apply()
+				{
+					try
+					{
+						IL.Player.Collide += Player_Collide;
+						IL.Player.SlugSlamConditions += Player_SlugSlamConditions;
+					}
+					catch (Exception ex)
+					{
+						UnityEngine.Debug.LogException(ex);
+					}
+				}
+
+				private static void Player_Collide(ILContext il)
+				{
+					ILCursor cursor = new(il);
+					// if (!this.isGourmand && this.animation == Player.AnimationIndex.BellySlide)
+					if (cursor.TryGotoNext(MoveType.After,
+						x => x.MatchCallOrCallvirt(typeof(Player).GetProperty(nameof(Player.isGourmand), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).GetGetMethod())))
+					{
+						cursor.MoveAfterLabels();
+						cursor.ImplementILCodeAssumingLdarg0(CanSlam);
+
+						if (TryNext(cursor)) // if (this.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Gourmand && this.animation == Player.AnimationIndex.Roll && this.gourmandAttackNegateTime <= 0)
+						{
+							cursor.ImplementILCodeAssumingLdarg0(CanSlam);
+						}
+					}
+				}
+
+				private static void Player_SlugSlamConditions(ILContext il)
+				{
+					ILCursor cursor = new(il);
+
+					if (TryNext(cursor)) // if (this.SlugCatClass != MoreSlugcatsEnums.SlugcatStatsName.Gourmand)
+					{
+						cursor.ImplementILCodeAssumingLdarg0(CannotSlam);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Handles hooks to the <see cref="PlayerGraphics"/> class, or classes that reference it.
+		/// </summary>
+		public class GraphicHooks
+		{
+			private static Color lastBlackColor;
+
+			internal static void ApplyHooks()
+			{
+				GeneralHooks.Apply();
+				SpearmasterHooks.Apply();
+				RivuletHooks.Apply();
+				SaintHooks.Apply();
+			}
+
+			internal class GeneralHooks
+			{
+				internal static void Apply()
+				{
+					On.PlayerGraphics.ctor += Initialize;
+					On.PlayerGraphics.Update += PlayerGraphics_Update;
+					IL.PlayerGraphics.InitiateSprites += InitateCustomSprites;
+					On.PlayerGraphics.AddToContainer += AddToContainer;
+					On.PlayerGraphics.ApplyPalette += PlayerGraphics_ApplyPalette;
+					On.PlayerGraphics.DrawSprites += DrawSprites;
+					IL.PlayerGraphics.DefaultBodyPartColorHex += DefaultBodyPartColor;
+					IL.PlayerGraphics.ColoredBodyPartList += DefaultColoredBodyPartList;
+					On.PlayerGraphics.DefaultFaceSprite_float_int += PlayerGraphics_DefaultFaceSprite;
+				}
 
 				/// <summary>
 				/// Allows <see cref="SlugBaseCharacter"/> to have gills, a fade in mark, and tail specks.
 				/// </summary>
-				internal static void PlayerGraphics_ctor(On.PlayerGraphics.orig_ctor orig, PlayerGraphics self, PhysicalObject ow)
+				private static void Initialize(On.PlayerGraphics.orig_ctor orig, PlayerGraphics self, PhysicalObject ow)
 				{
 					orig(self, ow);
 
-					int startSprite = 12;
-					if (ModManager.MSC && self.player.HasFeature(Resources.rivuletGills))
+					if (SlugBaseCharacter.TryGet(self.player.SlugCatClass, out _))
 					{
-						self.gills = new(self, startSprite);
-						startSprite += self.gills.numberOfSprites;
-					}
+						int startSprite = 12;
+						if (ModManager.MSC && self.player.TrueForSlugbase(ExtFeatures.numOfRivGills))
+						{
+							self.gills = new(self, startSprite);
+							startSprite += self.gills.numberOfSprites;
+						}
 
-					if (ModManager.MSC && self.player.HasFeature(Resources.spearSpecks))
-					{
-						self.tailSpecks = new PlayerGraphics.TailSpeckles(self, startSprite);
-						startSprite += self.tailSpecks.numberOfSprites;
-					}
+						if (ModManager.MSC && self.player.TrueForSlugbase(ExtFeatures.rowsAndColumnsSpearSpecks))
+						{
+							self.tailSpecks = new PlayerGraphics.TailSpeckles(self, startSprite);
+							startSprite += self.tailSpecks.numberOfSprites;
+						}
 
-					if (self.player.abstractCreature.world.game.IsStorySession && GameFeatures.TheMark.TryGet(self.player.abstractCreature.world.game, out bool hasMark) && hasMark && self.player.HasFeature(Resources.revealMark))
-					{
-						self.markBaseAlpha = Mathf.Pow(Mathf.InverseLerp(4f, 14f, (float)self.player.abstractCreature.world.game.GetStorySession.saveState.cycleNumber), 3.5f);
+						if (self.player.abstractCreature.world.game.IsStorySession && GameFeatures.TheMark.TryGet(self.player.abstractCreature.world.game, out bool hasMark) && hasMark && self.player.abstractCreature.world.game.HasFeature(ExtFeatures.revealMarkOverTotalCycles, out int cycles))
+						{
+							self.markBaseAlpha = Mathf.Pow(Mathf.InverseLerp(4f, (float)cycles, (float)self.player.abstractCreature.world.game.GetStorySession.saveState.cycleNumber), 3.5f);
+						}
 					}
 				}
 
-				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to have gills.
-				/// </summary>
-				internal static void PlayerGraphics_Update(On.PlayerGraphics.orig_Update orig, PlayerGraphics self)
+				private static void PlayerGraphics_Update(On.PlayerGraphics.orig_Update orig, PlayerGraphics self)
 				{
 					orig(self);
 
-					if (ModManager.MSC && self.player.HasFeature(Resources.rivuletGills))
+					if (ModManager.MSC && self.player.TrueForSlugbase(ExtFeatures.numOfRivGills))
 					{
 						self.gills.Update();
 					}
@@ -847,40 +804,43 @@ namespace ExtendedSlugbaseFeatures
 				/// <summary>
 				/// Allows <see cref="SlugBaseCharacter"/> to have gills, tail specks, and a fluffy head.
 				/// </summary>
-				internal static void IL_PlayerGraphics_InitiateSprites(ILContext il)
+				private static void InitateCustomSprites(ILContext il)
 				{
 					try
 					{
 						ILCursor cursor = new(il);
 						// gown.InitiateSprite(this.gownIndex, sLeaser, rCam);
-						cursor.GotoNext(MoveType.After, x => x.MatchCall<PlayerGraphics.Gown>(nameof(PlayerGraphics.Gown.InitiateSprite)));
-
-						cursor.Emit(OpCodes.Ldarg_0);
-						cursor.Emit(OpCodes.Ldarg_1);
-						cursor.Emit(OpCodes.Ldarg_2);
-						cursor.EmitDelegate((PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam) =>
+						if (cursor.TryGotoNext(MoveType.After, x => x.MatchCall<PlayerGraphics.Gown>(nameof(PlayerGraphics.Gown.InitiateSprite))))
 						{
-							if (ModManager.MSC && self.player.HasFeature(Resources.saintFluff))
+							cursor.Emit(OpCodes.Ldarg_0);
+							cursor.Emit(OpCodes.Ldarg_1);
+							cursor.Emit(OpCodes.Ldarg_2);
+							static void InitiateSprites(PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
 							{
-								sLeaser.sprites[3].SetElementByName("HeadB0");
+								if (ModManager.MSC && self.player.TrueForSlugbase(ExtFeatures.hasSaintHead))
+								{
+									sLeaser.sprites[3].SetElementByName("HeadB0");
+								}
+
+								if (ModManager.MSC && self.player.TrueForSlugbase(ExtFeatures.numOfRivGills))
+								{
+									self.gills.startSprite = sLeaser.sprites.Length;
+									Array.Resize(ref sLeaser.sprites, sLeaser.sprites.Length + self.gills.numberOfSprites);
+
+									self.gills.InitiateSprites(sLeaser, rCam);
+								}
+
+								if (ModManager.MSC && self.player.TrueForSlugbase(ExtFeatures.rowsAndColumnsSpearSpecks))
+								{
+									self.tailSpecks.startSprite = sLeaser.sprites.Length;
+									Array.Resize(ref sLeaser.sprites, sLeaser.sprites.Length + self.tailSpecks.numberOfSprites);
+
+									self.tailSpecks.InitiateSprites(sLeaser, rCam);
+								}
 							}
+							cursor.EmitDelegate(InitiateSprites);
+						}
 
-							if (ModManager.MSC && self.player.HasFeature(Resources.rivuletGills))
-							{
-								self.gills.startSprite = sLeaser.sprites.Length;
-								Array.Resize(ref sLeaser.sprites, sLeaser.sprites.Length + self.gills.numberOfSprites);
-
-								self.gills.InitiateSprites(sLeaser, rCam);
-							}
-
-							if (ModManager.MSC && self.player.HasFeature(Resources.spearSpecks))
-							{
-								self.tailSpecks.startSprite = sLeaser.sprites.Length;
-								Array.Resize(ref sLeaser.sprites, sLeaser.sprites.Length + self.tailSpecks.numberOfSprites);
-
-								self.tailSpecks.InitiateSprites(sLeaser, rCam);
-							}
-						});
 					}
 					catch (Exception ex)
 					{
@@ -892,16 +852,16 @@ namespace ExtendedSlugbaseFeatures
 				/// <summary>
 				/// Allows <see cref="SlugBaseCharacter"/> to have gills and tail specks.
 				/// </summary>
-				internal static void PlayerGraphics_AddToContainer(On.PlayerGraphics.orig_AddToContainer orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContatiner)
+				private static void AddToContainer(On.PlayerGraphics.orig_AddToContainer orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContatiner)
 				{
 					orig(self, sLeaser, rCam, newContatiner);
 
-					if (ModManager.MSC && self.player.HasFeature(Resources.rivuletGills) && sLeaser.sprites.Length > self.gills.startSprite)
+					if (ModManager.MSC && self.player.TrueForSlugbase(ExtFeatures.numOfRivGills) && sLeaser.sprites.Length > self.gills.startSprite)
 					{
 						self.gills.AddToContainer(sLeaser, rCam, rCam.ReturnFContainer("Midground"));
 					}
 
-					if (ModManager.MSC && self.player.HasFeature(Resources.spearSpecks) && sLeaser.sprites.Length > self.tailSpecks.startSprite)
+					if (ModManager.MSC && self.player.TrueForSlugbase(ExtFeatures.rowsAndColumnsSpearSpecks) && sLeaser.sprites.Length > self.tailSpecks.startSprite)
 					{
 						self.tailSpecks.AddToContainer(sLeaser, rCam, rCam.ReturnFContainer("Midground"));
 					}
@@ -910,11 +870,11 @@ namespace ExtendedSlugbaseFeatures
 				/// <summary>
 				/// Allows <see cref="SlugBaseCharacter"/> to color gills. Also automatically replaces pure black (transparent) with the room palette's black color.
 				/// </summary>
-				internal static void PlayerGraphics_ApplyPalette(On.PlayerGraphics.orig_ApplyPalette orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
+				private static void PlayerGraphics_ApplyPalette(On.PlayerGraphics.orig_ApplyPalette orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
 				{
 					if (SlugBaseCharacter.TryGet(self.player.SlugCatClass, out var character2) && PlayerFeatures.CustomColors.TryGet(character2, out var slots2))
 					{
-						float lerp = Resources.watcherBlackAmount.TryGet(self.player, out float amount) ? amount : 1f;
+						float lerp = ExtFeatures.watcherBlackLerpAmount.TryGet(self.player, out float amount) ? amount : 1f;
 						Color watcherCol = Color.Lerp(palette.blackColor, Custom.HSL2RGB(0.63055557f, 0.54f, 0.5f), Mathf.Lerp(0.08f, 0.04f, palette.darkness) * lerp);
 						for (int i = 0; i < slots2.Length; i++)
 						{
@@ -939,7 +899,7 @@ namespace ExtendedSlugbaseFeatures
 					orig(self, sLeaser, rCam, palette);
 
 
-					if (ModManager.MSC && self.player.HasFeature(Resources.rivuletGills, out var character))
+					if (ModManager.MSC && self.player.TrueForSlugbase(ExtFeatures.numOfRivGills) && SlugBaseCharacter.TryGet(self.player.SlugCatClass, out var character))
 					{
 						if (PlayerFeatures.CustomColors.TryGet(character, out var slots) && slots.Length > 1)
 						{
@@ -967,11 +927,33 @@ namespace ExtendedSlugbaseFeatures
 					}
 				}
 
+				/// <summary>
+				/// Allows <see cref="SlugBaseCharacter"/> to have gills, tail specks, and a fluffy head.
+				/// </summary>
+				private static void DrawSprites(On.PlayerGraphics.orig_DrawSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
+				{
+					orig(self, sLeaser, rCam, timeStacker, camPos);
+
+					if (ModManager.MSC && self.player.TrueForSlugbase(ExtFeatures.hasSaintHead) && !sLeaser.sprites[3].element.name.Contains("HeadB"))
+					{
+						sLeaser.sprites[3].SetElementByName($"HeadB{sLeaser.sprites[3].element.name.Substring("HeadA".Length)}");
+					}
+
+					if (ModManager.MSC && self.player.TrueForSlugbase(ExtFeatures.numOfRivGills))
+					{
+						self.gills.DrawSprites(sLeaser, rCam, timeStacker, camPos);
+					}
+
+					if (ModManager.MSC && self.player.TrueForSlugbase(ExtFeatures.rowsAndColumnsSpearSpecks))
+					{
+						self.tailSpecks.DrawSprites(sLeaser, rCam, timeStacker, camPos);
+					}
+				}
 
 				/// <summary>
 				/// Allows <see cref="SlugBaseCharacter"/> to have gills and tail specks colors on custom color menu.
 				/// </summary>
-				internal static void PlayerGraphics_DefaultBodyPartColorHex(ILContext il)
+				private static void DefaultBodyPartColor(ILContext il)
 				{
 					try
 					{
@@ -983,12 +965,12 @@ namespace ExtendedSlugbaseFeatures
 						cursor.Emit(OpCodes.Ldloc, 0);
 						static void CustomColors(SlugcatStats.Name name, List<string> colors)
 						{
-							if (name.HasFeature(Resources.rivuletGills, out var character) && PlayerFeatures.CustomColors.TryGet(character, out var slots) && slots.Any(x => x.Name == "Gills"))
+							if (SlugBaseCharacter.TryGet(name, out var character) && PlayerFeatures.CustomColors.TryGet(character, out var slots) && slots.Any(x => x.Name == "Gills"))
 							{
 								colors.Add(Custom.colorToHex(slots.Where(x => x.Name == "Gills").FirstOrDefault().Default));
 							}
 
-							if (name.HasFeature(Resources.spearSpecks, out var character2) && PlayerFeatures.CustomColors.TryGet(character2, out var slots2) && slots2.Any(x => x.Name == "Spears"))
+							if (SlugBaseCharacter.TryGet(name, out var character2) && PlayerFeatures.CustomColors.TryGet(character2, out var slots2) && slots2.Any(x => x.Name == "Spears"))
 							{
 								colors.Add(Custom.colorToHex(slots2.Where(x => x.Name == "Spears").FirstOrDefault().Default));
 							}
@@ -1004,7 +986,7 @@ namespace ExtendedSlugbaseFeatures
 				/// <summary>
 				/// Allows <see cref="SlugBaseCharacter"/> to have gills and tail specks colors on custom color menu.
 				/// </summary>
-				internal static void PlayerGraphics_ColoredBodyPartList(ILContext il)
+				private static void DefaultColoredBodyPartList(ILContext il)
 				{
 					try
 					{
@@ -1016,12 +998,12 @@ namespace ExtendedSlugbaseFeatures
 						cursor.Emit(OpCodes.Ldloc_0);
 						static void HasFeatures(SlugcatStats.Name name, List<string> parts)
 						{
-							if (name.HasFeature(Resources.rivuletGills, out _))
+							if (SlugBaseCharacter.TryGet(name, out var character) && PlayerFeatures.CustomColors.TryGet(character, out var slots) && slots.Any(x => x.Name == "Gills"))
 							{
 								parts.Add("Gills");
 							}
 
-							if (name.HasFeature(Resources.spearSpecks, out _))
+							if (SlugBaseCharacter.TryGet(name, out var character2) && PlayerFeatures.CustomColors.TryGet(character2, out var slots2) && slots2.Any(x => x.Name == "Spears"))
 							{
 								parts.Add("Spears");
 							}
@@ -1035,34 +1017,11 @@ namespace ExtendedSlugbaseFeatures
 				}
 
 				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to have gills, tail specks, and a fluffy head.
-				/// </summary>
-				internal static void PlayerGraphics_DrawSprites(On.PlayerGraphics.orig_DrawSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
-				{
-					orig(self, sLeaser, rCam, timeStacker, camPos);
-
-					if (ModManager.MSC && self.player.HasFeature(Resources.saintFluff) && !sLeaser.sprites[3].element.name.Contains("HeadB"))
-					{
-						sLeaser.sprites[3].SetElementByName($"HeadB{sLeaser.sprites[3].element.name.Substring("HeadA".Length)}");
-					}
-
-					if (ModManager.MSC && self.player.HasFeature(Resources.rivuletGills))
-					{
-						self.gills.DrawSprites(sLeaser, rCam, timeStacker, camPos);
-					}
-
-					if (ModManager.MSC && self.player.HasFeature(Resources.spearSpecks))
-					{
-						self.tailSpecks.DrawSprites(sLeaser, rCam, timeStacker, camPos);
-					}
-				}
-
-				/// <summary>
 				/// Allows <see cref="SlugBaseCharacter"/> to use Artificer's face.
 				/// </summary>
-				internal static string PlayerGraphics_DefaultFaceSprite(On.PlayerGraphics.orig_DefaultFaceSprite_float_int orig, PlayerGraphics self, float eyeScale, int imgIndex)
+				private static string PlayerGraphics_DefaultFaceSprite(On.PlayerGraphics.orig_DefaultFaceSprite_float_int orig, PlayerGraphics self, float eyeScale, int imgIndex)
 				{
-					bool artiEyes = self.player.HasFeature(Resources.artiEyes);
+					bool artiEyes = self.player.TrueForSlugbase(ExtFeatures.hasArtiFace);
 					if (!(ModManager.MSC && self.player.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Slugpup && self.player.room != null && self.player.room.world.game.rainWorld.progression.miscProgressionData.currentlySelectedSinglePlayerSlugcat == MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel) && artiEyes)
 					{
 						int num = 0;
@@ -1099,23 +1058,51 @@ namespace ExtendedSlugbaseFeatures
 
 					return orig(self, eyeScale, imgIndex);
 				}
+			}
 
-				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to have Saint's closed eyes.
-				/// </summary>
-				internal static bool PlayerGraphics_SaintFaceCondition(On.PlayerGraphics.orig_SaintFaceCondition orig, PlayerGraphics self)
+			internal class SpearmasterHooks
+			{
+				internal static void Apply()
 				{
-					return orig(self) || self.player.HasFeature(Resources.saintEyes);
+					IL.PlayerGraphics.TailSpeckles.ctor += TailSpeckles_ctor;
+					On.PlayerGraphics.TailSpeckles.DrawSprites += TailSpeckles_DrawSprites;
+					On.Spear.DrawSprites += Spear_DrawSprites;
+					On.Spear.Umbilical.ApplyPalette += Spear_Umbilical_ApplyPalette;
+				}
+
+				private static void TailSpeckles_ctor(ILContext il)
+				{
+					ILCursor cursor = new(il);
+
+					if (cursor.TryGotoNext(MoveType.After,
+						x => x.MatchStfld<PlayerGraphics.TailSpeckles>(nameof(PlayerGraphics.TailSpeckles.lines)),
+						x => x.MatchLdarg(0)))
+					{
+						cursor.Emit(OpCodes.Ldarg_0);
+						cursor.Emit(OpCodes.Ldarg_1);
+						static void HandleRowsAndColumns(PlayerGraphics.TailSpeckles self, PlayerGraphics pGraphics)
+						{
+							if (pGraphics.player.HasFeature(ExtFeatures.rowsAndColumnsSpearSpecks, out var specks))
+							{
+								if (specks[0] > -1)
+									self.rows = specks[0];
+
+								if (specks.Length > 1 && specks[1] > -1)
+									self.lines = specks[1];
+							}
+						}
+						cursor.EmitDelegate(HandleRowsAndColumns);
+					}
 				}
 
 				/// <summary>
 				/// Allows <see cref="SlugBaseCharacter"/> to color tail specks.
 				/// </summary>
-				internal static void TailSpeckles_DrawSprites(On.PlayerGraphics.TailSpeckles.orig_DrawSprites orig, PlayerGraphics.TailSpeckles self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
+				private static void TailSpeckles_DrawSprites(On.PlayerGraphics.TailSpeckles.orig_DrawSprites orig, PlayerGraphics.TailSpeckles self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
 				{
 					orig(self, sLeaser, rCam, timeStacker, camPos);
 
-					if (self.pGraphics.player.HasFeature(Resources.spearSpecks, out var character) && character != null)
+					if (self.pGraphics.player.TrueForSlugbase(ExtFeatures.rowsAndColumnsSpearSpecks) && SlugBaseCharacter.TryGet(self.pGraphics.player.SlugCatClass, out var character))
 					{
 						Color color = new();
 						if (PlayerFeatures.CustomColors.TryGet(character, out var slots) && slots.Length > 1)
@@ -1156,7 +1143,7 @@ namespace ExtendedSlugbaseFeatures
 				/// <summary>
 				/// Allows <see cref="SlugBaseCharacter"/> to color spearmaster spears.
 				/// </summary>
-				internal static void Spear_DrawSprites(On.Spear.orig_DrawSprites orig, Spear self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
+				private static void Spear_DrawSprites(On.Spear.orig_DrawSprites orig, Spear self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
 				{
 					orig(self, sLeaser, rCam, timeStacker, camPos);
 
@@ -1179,22 +1166,67 @@ namespace ExtendedSlugbaseFeatures
 				/// <summary>
 				/// Allows <see cref="SlugBaseCharacter"/> to color spearmaster umbilical cords.
 				/// </summary>
-				internal static void Spear_Umbilical_ApplyPalette(On.Spear.Umbilical.orig_ApplyPalette orig, Spear.Umbilical self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
+				private static void Spear_Umbilical_ApplyPalette(On.Spear.Umbilical.orig_ApplyPalette orig, Spear.Umbilical self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
 				{
 					orig(self, sLeaser, rCam, palette);
 
-					if (self.spider.HasFeature(Resources.feedFromSpears) && spearCWT.TryGetValue(self.maggot.abstractSpear, out var col) && col.slugColor != null)
+					if (self.spider.TrueForSlugbase(ExtFeatures.forceFeedingFromSpears) && spearCWT.TryGetValue(self.maggot.abstractSpear, out var col) && col.slugColor != null)
 					{
 						self.threadCol = col.slugColor.Value;
 						self.fogColor = Color.Lerp(palette.fogColor, col.slugColor.Value, 0.8f);
 					}
 				}
+			}
 
-				public static ConditionalWeakTable<AbstractSpear, SpearValues> spearCWT = new();
-
-				public class SpearValues
+			internal class RivuletHooks
+			{
+				internal static void Apply()
 				{
-					public Color? slugColor;
+					IL.PlayerGraphics.AxolotlGills.ctor += AxolotlGills_ctor;
+				}
+
+				private static void AxolotlGills_ctor(ILContext il)
+				{
+					try
+					{
+						ILCursor cursor = new(il);
+
+						if (cursor.TryGotoNext(MoveType.After,
+							x => x.MatchStloc(1)))
+						{
+							cursor.Emit(OpCodes.Ldloc_1);
+							cursor.Emit(OpCodes.Ldarg_1);
+							static int RivuletGills(int gillAmount, PlayerGraphics pGraphics)
+							{
+								if (pGraphics.player.HasFeature(ExtFeatures.numOfRivGills, out var gillsRows))
+									gillAmount = gillsRows;
+
+								return gillAmount;
+							}
+							cursor.EmitDelegate(RivuletGills);
+							cursor.Emit(OpCodes.Stloc_1);
+						}
+					}
+					catch (Exception ex)
+					{
+						UnityEngine.Debug.LogException(ex);
+					}
+				}
+			}
+
+			internal class SaintHooks
+			{
+				internal static void Apply()
+				{
+					On.PlayerGraphics.SaintFaceCondition += PlayerGraphics_SaintFaceCondition;
+				}
+
+				/// <summary>
+				/// Allows <see cref="SlugBaseCharacter"/> to have Saint's closed eyes.
+				/// </summary>
+				private static bool PlayerGraphics_SaintFaceCondition(On.PlayerGraphics.orig_SaintFaceCondition orig, PlayerGraphics self)
+				{
+					return orig(self) || self.player.TrueForSlugbase(ExtFeatures.usesSaintFaceCondition);
 				}
 			}
 		}

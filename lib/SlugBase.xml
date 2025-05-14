@@ -226,6 +226,89 @@
             </summary>
             <param name="json">The JSON data to load from.</param>
         </member>
+        <member name="T:SlugBase.CustomTimeline">
+            <summary>
+            A timeline added by SlugBase.
+            </summary>
+        </member>
+        <member name="P:SlugBase.CustomTimeline.Registry">
+            <summary>
+            Stores all registered <see cref="T:SlugBase.CustomTimeline"/>s.
+            </summary>
+        </member>
+        <member name="P:SlugBase.CustomTimeline.OrderedTimelines">
+            <summary>
+            All registered <see cref="T:SlugBase.CustomTimeline"/>s to be added to <see cref="M:SlugcatStats.SlugcatTimelineOrder"/>.
+            </summary>
+            <remarks>
+            This list is topologically sorted. Each timeline may reference those ahead of it in <see cref="P:SlugBase.CustomTimeline.InsertBefore"/> or <see cref="P:SlugBase.CustomTimeline.InsertAfter"/>.
+            </remarks>
+        </member>
+        <member name="M:SlugBase.CustomTimeline.ReloadTimelineOrder">
+            <summary>
+            Reload the order of custom timelines text time <see cref="P:SlugBase.CustomTimeline.OrderedTimelines"/> is accessed.
+            </summary>
+        </member>
+        <member name="P:SlugBase.CustomTimeline.ID">
+            <summary>
+            This timeline's unique ID.
+            </summary>
+        </member>
+        <member name="P:SlugBase.CustomTimeline.Base">
+            <summary>
+            An array of timelines this timeline inherits from.
+            </summary>
+            <remarks>
+            If a file specific to this timeline isn't found, these are checked in order before using the default.
+            </remarks>
+        </member>
+        <member name="P:SlugBase.CustomTimeline.InsertBefore">
+            <summary>
+            The timeline that comes after this.
+            </summary>
+            <remarks>
+            When determining the order of timelines, this one will be inserted immediately before
+            the first registered element in <see cref="P:SlugBase.CustomTimeline.InsertBefore"/>.
+            </remarks>
+            <seealso cref="P:SlugBase.CustomTimeline.InsertAfter"/>
+        </member>
+        <member name="P:SlugBase.CustomTimeline.InsertAfter">
+            <summary>
+            The timeline that comes before this.
+            </summary>
+            <remarks>
+            When determining the order of timelines, this one will be inserted immediately after
+            the first registered element in <see cref="P:SlugBase.CustomTimeline.InsertBefore"/>.
+            </remarks>
+            <seealso cref="P:SlugBase.CustomTimeline.InsertAfter"/>
+        </member>
+        <member name="P:SlugBase.CustomTimeline.Priorities">
+            <summary>
+            All valid options to use for timeline inheritance, starting with <see cref="P:SlugBase.CustomTimeline.ID"/> and continuing through <see cref="P:SlugBase.CustomTimeline.Base"/>.
+            This includes parent timelines from <see cref="T:SlugBase.CustomTimeline"/>s this inherits from.
+            </summary>
+        </member>
+        <member name="M:SlugBase.CustomTimeline.AddFlattenedPriorities(System.Collections.Generic.List{SlugcatStats.Timeline})">
+            <summary>
+            List all timelines this inherits from. Unlike <see cref="P:SlugBase.CustomTimeline.Priorities"/>,
+            this includes <see cref="P:SlugBase.CustomTimeline.Base"/> timelines from parents.
+            </summary>
+        </member>
+        <member name="M:SlugBase.CustomTimeline.InheritsFrom(SlugcatStats.Timeline)">
+            <summary>
+            Check if <paramref name="parent"/> is in the list of base timelines.
+            </summary>
+        </member>
+        <member name="M:SlugBase.CustomTimeline.GetTimelines(SlugBase.JsonAny)">
+            <summary>
+            Converts a string or list of strings to a list of timelines.
+            </summary>
+        </member>
+        <member name="M:SlugBase.CustomTimeline.GetTimeline(System.String)">
+            <summary>
+            Converts a string to a timeline, ignoring case.
+            </summary>
+        </member>
         <member name="T:SlugBase.DataTypes.ColorSlot">
             <summary>
             Represents a color that may be configured by the user.
@@ -751,22 +834,22 @@
             <summary>"death_scene": The scene for this slugcat when losing from a non-starvation death.</summary>
         </member>
         <member name="F:SlugBase.Features.GameFeatures.IntroScene">
-            <summary>"intro_scene": Add an intro scene in the style of Survivor or Gormaund.</summary>
+            <summary>"intro_scene": Add an intro scene in the style of Survivor or Gourmand.</summary>
         </member>
         <member name="F:SlugBase.Features.GameFeatures.OutroScene">
             <summary>"outro_scene": Add an outro scene for a slugbase slugcat. </summary>
         </member>
         <member name="F:SlugBase.Features.GameFeatures.WorldState">
-            <summary>"world_state": The character to use for creature spawns and room connections.</summary>
+            <summary>"world_state": The timeline to use for creature spawns and room connections.</summary>
         </member>
         <member name="F:SlugBase.Features.GameFeatures.StoryRegions">
             <summary>"story_regions": The new or removed story regions from an inherited world_state.</summary>
         </member>
         <member name="F:SlugBase.Features.GameFeatures.TimelineBefore">
-            <summary>"timeline_before": The next character in the timeline.</summary>
+            <summary>"timeline_before": The next timeline after this character's.</summary>
         </member>
         <member name="F:SlugBase.Features.GameFeatures.TimelineAfter">
-            <summary>"timeline_after": The previous character in the timeline.</summary>
+            <summary>"timeline_after": The previous timeline before this character's.</summary>
         </member>
         <member name="F:SlugBase.Features.GameFeatures.TitleCard">
             <summary>"title_card": Add a intro titlecard to be randomly selected. Must be 1366x768 pixels big to display correctly.</summary>
@@ -833,6 +916,9 @@
         <member name="M:SlugBase.Features.FeatureTypes.PlayerExtEnum``1(System.String)">
             <summary>Create a player feature that takes one enum value.</summary>
         </member>
+        <member name="M:SlugBase.Features.FeatureTypes.PlayerExtEnums``1(System.String,System.Int32,System.Int32)">
+            <summary>Create a player feature that takes an array of enum values.</summary>
+        </member>
         <member name="M:SlugBase.Features.FeatureTypes.GameInt(System.String)">
             <summary>Create a game feature that takes one integer.</summary>
         </member>
@@ -883,6 +969,9 @@
         </member>
         <member name="M:SlugBase.Features.FeatureTypes.GameExtEnum``1(System.String)">
             <summary>Create a game feature that takes one enum value.</summary>
+        </member>
+        <member name="M:SlugBase.Features.FeatureTypes.GameExtEnums``1(System.String,System.Int32,System.Int32)">
+            <summary>Create a game feature that takes an array of enum values.</summary>
         </member>
         <member name="P:SlugBase.Features.WorldHooks.Separator">
             <summary>Path.DirectorySeparatorChar but shorter, because it takes too much space</summary>
@@ -946,7 +1035,7 @@
             <summary>Try casting to <see cref="T:System.String"/>, returning <c>null</c> on failure.</summary>
         </member>
         <member name="M:SlugBase.JsonAny.TryBool">
-            <summary>Try casting to <see cref="T:System.String"/>, returning <c>null</c> on failure.</summary>
+            <summary>Try casting to <see cref="T:System.Boolean"/>, returning <c>null</c> on failure.</summary>
         </member>
         <member name="M:SlugBase.JsonAny.IsNull">
             <summary>Test if this value is <c>null</c>.</summary>
@@ -1504,6 +1593,14 @@
             <see cref="P:ExtEnumBase.Index"/> will be -1 for values that could not be parsed.
             </remarks>
         </member>
+        <member name="M:SlugBase.JsonUtils.ToExtEnums``1(SlugBase.JsonAny)">
+            <summary>
+            Convert list to <see cref="T:ExtEnum`1"/>[].
+            </summary>
+            <remarks>
+            <see cref="P:ExtEnumBase.Index"/> will be -1 for values that could not be parsed.
+            </remarks>
+        </member>
         <member name="M:SlugBase.JsonUtils.ToVector2(SlugBase.JsonAny)">
             <summary>
             Convert to <see cref="T:UnityEngine.Vector2"/>
@@ -1511,6 +1608,34 @@
             <remarks>
             This may be a list of components or an object with "x" and "y" properties.
             </remarks>
+        </member>
+        <member name="T:SlugBase.SaveData.MinedSaveData">
+            <summary>
+            Holds all the slugcat associated data that is needed outside of loaded savestate
+            </summary>
+        </member>
+        <member name="F:SlugBase.SaveData.MinedSaveData.Data">
+            <summary>
+            Registry of all additional data for each savegamedata
+            </summary>
+        </member>
+        <member name="M:SlugBase.SaveData.MinedSaveData.#ctor(RainWorld,SlugcatStats.Name)">
+            <summary>
+            Mines select menu scene from saved data
+            </summary>
+            <param name="rainWorld"></param>
+            <param name="slugcat"></param>
+        </member>
+        <member name="M:SlugBase.SaveData.MinedSaveData.Mine``1(System.String,System.String,System.String,``0)">
+            <summary>
+            Finds a base64 encoded json string inside saveline and tries to unpack it into an object
+            </summary>
+            <typeparam name="T">Type of object that is being looked for</typeparam>
+            <param name="saveLine">Line to search object in</param>
+            <param name="startMarker">Left delimiter of saved value</param>
+            <param name="endMarker">Right delimiter of saved value</param>
+            <param name="defaultValue">What to return if the process failed</param>
+            <returns>instance of T saved inside string</returns>
         </member>
         <member name="T:SlugBase.SaveData.SaveDataExtension">
             <summary>
@@ -1630,6 +1755,11 @@
             Settings, abilities, or other <see cref="T:SlugBase.Features.Feature"/>s of this character.
             </summary>
         </member>
+        <member name="M:SlugBase.SlugBaseCharacter.UpdateLegacyTimeline">
+            <summary>
+            If necessary, registers or updates a character-specific timeline that uses the pre-Watcher world state system.
+            </summary>
+        </member>
         <member name="T:SlugBase.SlugBaseCharacter.FeatureList">
             <summary>
             Stores the <see cref="T:SlugBase.Features.Feature"/>s of a <see cref="T:SlugBase.SlugBaseCharacter"/>.
@@ -1697,6 +1827,42 @@
         <member name="P:SlugBase.SlugBaseCharacter.RefreshEventArgs.Character">
             <summary>
             The reloaded <see cref="T:SlugBase.SlugBaseCharacter"/>.
+            </summary>
+        </member>
+        <member name="M:SlugBase.Utils.FirstValidEnum``1(System.Collections.Generic.IEnumerable{``0})">
+            <summary>
+            Gets the first non-null, registered enum in <paramref name="values"/>.
+            </summary>
+            <param name="values">The collection to search through.</param>
+            <returns>A registered enum, or <c>null</c> if no enums in the list are registered.</returns>
+        </member>
+        <member name="M:SlugBase.Utils.AllValidEnums``1(System.Collections.Generic.IEnumerable{``0})">
+            <summary>
+            Gets all non-null, registered enums in <paramref name="values"/>.
+            </summary>
+            <param name="values">The collection to search through.</param>
+        </member>
+        <member name="M:SlugBase.Utils.GetName(System.String)">
+            <summary>
+            Gets the <see cref="T:SlugcatStats.Name"/> corresponding to <paramref name="text"/>, converting canon character names to code names.
+            </summary>
+            <param name="text">The name of the character to convert to an ID.</param>
+        </member>
+        <member name="M:SlugBase.Utils.MatchCaseInsensitiveEnum``1(System.String)">
+            <summary>
+            Changes the case of <paramref name="name"/> to match the corresponding enum in <typeparamref name="T"/>.
+            </summary>
+            <param name="name">The string to capitalize.</param>
+            <returns>The value of an enum in <typeparamref name="T"/>, or <paramref name="name"/> if no matching entry exists.</returns>
+        </member>
+        <member name="M:SlugBase.Utils.StringsToColors(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Converts a list of hexadecimal strings to colors.
+            </summary>
+        </member>
+        <member name="M:SlugBase.Utils.ColorsToStrings(System.Collections.Generic.IEnumerable{UnityEngine.Color})">
+            <summary>
+            Converts a list of colors to hexadecimal strings.
             </summary>
         </member>
     </members>

@@ -39,16 +39,16 @@ Spear types are defined by setting specific spear values. Some need a `boolean` 
 Object properties support the `swollen` attribute, used when [Bubble Fruit](https://rainworld.miraheze.org/wiki/Bubble_Fruit?target="_blank") pop and become edible.
 
 ## General Features
-### `"use_watchersblackamount"`
+### `"watcher_blue"`
 `float`\
-Ex: `"use_watchersblackamount": 1`\
-By default, when setting a [custom_colors](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#custom_colors?target="_blank") slot to pure black (#000000), which is usually used for transparency, it will attempt to use the palette's black color instead. This setting when specified, will use Nightcat or Watcher's blueish black color to the specified amount.
+Ex: `"watcher_blue": 1`\
+By default, when setting a [custom_colors](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#custom_colors?target="_blank") slot to pure black ``#000000``, which is usually used for transparency, it will attempt to use the palette's black color instead. This setting when specified, will use Nightcat or Watcher's blueish black color to the specified amount.
 ```csharp
-Color.Lerp(palette.blackColor, Custom.HSL2RGB(0.63055557f, 0.54f, 0.5f), Mathf.Lerp(0.08f, 0.04f, palette.darkness) * <use_watchersblackamount>)
+Color.Lerp(palette.blackColor, Custom.HSL2RGB(0.63055557f, 0.54f, 0.5f), Mathf.Lerp(0.08f, 0.04f, palette.darkness) * <watcher_blue>)
 ```
 
 ## World Features
-### "start_position"
+### `"start_position"`
 ```JSON
 {
     "<room_name>": [0, 0]
@@ -64,7 +64,7 @@ Ex:
 ```
 If the [start_room](https://slimecubed.github.io/slugbase/articles/features.html#start_room?target="_blank") array exists, attempts to set slugcat's position in room tiles based on the room's name. Room tiles can be measured with the Dev Tool [DebugMouse](https://rainworldmodding.miraheze.org/wiki/DebugMouse?target="_blank").
 
-### "start_stomach_item"
+### `"start_stomach_item"`
 ```JSON
 {
     "type": "<AbstractPhysicalObject.Type>",
@@ -80,7 +80,7 @@ Ex:
 ```
 If set, spawns in the stomach of the Player on first realization. Allows to pass any valid object type, even spears. For a reference of types, check out [AbstractPhysicalObject.Type](github.com/SlimeCubed/SlugBaseRemix/blob/master/Docs/articles/features.md#abstractphysicalobjecttype?&target="_blank"). The property parameter covers [Spear](#abstractspear), [DataPearl](#datapearlabstractdatapearldatapearltype), and [WaterNut](#waternut) objects but can be extended by the built-in custom object handler via a code mod.
 
-### "intro_cutscene"
+### `"intro_cutscene"`
 ```JSON 
 {	
     "<room_name>": {
@@ -134,9 +134,9 @@ The intro cutscene  feature is nuanced, and may seem complicated at glance. To s
 
 There is currently no tool to translate these inputs into this specified format, but some other mods like Preservatory include built in debug tools for recording inputs. Inputs can be updated in live game time, and replayed by restarting the cycle (Fastest way is pressing R in Dev Tools).
 
-### `"spawn_karmaflowers"`
+### `"spawn_karma_flowers"`
 `boolean`\
-Ex: `"spawn_karmaflowers": true`\
+Ex: `"spawn_karma_flowers": true`\
 If specified, allows control over if Karma Flowers spawn in the Slugbase character's campaign.
 
 ### `"enlightened"`
@@ -144,10 +144,10 @@ If specified, allows control over if Karma Flowers spawn in the Slugbase charact
 Ex: `"enlightened": true`\
 If true, allows the Slugbase character to be able to speak to Iterators and Echoes without the mark, and see Voidspawn without the glow.
 
-### `"revealmarkovertime"`
-`boolean`\
-Ex: `"revealmarkovertime": true`\
-If true along with [the_mark](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#the_mark?target="_blank"), uses Hunter's gradual mark reveal mechanic where the Mark doesn't visually appear for several cycles to keep it's existence hidden.
+### `"reveal_mark_overtime"`
+`int`\
+Ex: `"reveal_mark_overtime": 14`\
+If a valid int is passed along with [the_mark](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#the_mark?target="_blank") being true, uses Hunter's gradual mark reveal mechanic where the Mark doesn't visually appear for several cycles to keep it's existence hidden. The number represents the amount of cycles before the mark is at full opacity.
 
 
 # MSC Features
@@ -155,44 +155,44 @@ These are features that would be added in the `features` list of your Slugbase c
 
 ## Cosmetic Features
 These features are for looks only, they do not impact gameplay.
-### `"rivuletgills"`
-`boolean`\
-Ex: `"rivuletgills": true"`\
+### `"gill_rows"`
+`int`\
+Ex: `"gill_rows": 3"`\
 Gives the Player cosmetic Rivulet gills, automatically detecting if [custom_colors](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#custom_colors?target="_blank") contains colors for `"Gills"`.
 
-### `"saintfluff"`
+### `"saint_fluff"`
 `boolean`\
-Ex: `"saintfluff": true`\
+Ex: `"saint_fluff": true`\
 Gives the Player Saint's fluffy head sprite.
 
-### `"artieyes"`
+### `"arti_eyes"`
 `boolean`\
-Ex: `"artieyes": true`\
+Ex: `"arti_eyes": true`\
 Gives the Player Artificer's closed eye face sprite, does not include the scar sprite. Cannot be flipped.
 
-### `"sainteyes"`
+### `"saint_eyes"`
 `boolean`\
-Ex: `"sainteyes": true`\
-Gives the Player Saint's face sprite, overwrites `artieyes` if true, unless open.
+Ex: `"saint_eyes": true`\
+Gives the Player Saint's face sprite, overwrites [arti_eyes](#arti_eyes) if true, unless open.
 
 ## Cosmetic / Gameplay Features
 These features contain gameplay changes, and cosmetic changes.
-### `"can_spawnspears"`
-`boolean`\
-Ex: `"can_spawnspears": true`\
-Gives the Player Spearmaster tail specks, along with the ability to spawn needle spears. Automatically detects if [custom_colors](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#custom_colors?target="_blank") contains colors for `"Spears"`. Input for spawning spears changes slightly if the Player can still eat without spears or swallow, requiring the Player to hold up and grab instead. The Player is not required to eat from the spears by default.
+### `"spear_specks"`
+`int[]`\
+Ex: `"can_spawnspears": [5, 3]`\
+Gives the Player Spearmaster tail specks with the specified number of rows and lines, along with the ability to spawn needle spears. Automatically detects if [custom_colors](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#custom_colors?target="_blank") contains colors for `"Spears"`. Input for spawning spears changes slightly if the Player can still eat without spears or swallow, requiring the Player to hold up and grab instead. The Player is not required to eat from the spears by default.
 
 ## Gameplay Features
 These features contain gameplay changes, including general world properties.
 
-### `"max_slugpupspawns"`
+### `"max_slugpup_spawns"`
 `integer`\
-Ex: `"max_slugpupspawns": 5`\
+Ex: `"max_slugpup_spawns": 5`\
 The maximum number of Slugpups which can spawn at any given time in the Slugbase character's campaign.
 
-### `"can_accesswhitetokens"`
+### `"can_access_whitetokens"`
 `boolean`\
-Ex: `"can_accesswhitetokens": true`\
+Ex: `"can_access_whitetokens": true`\
 Allows the Slugbase character to  access Broadcasts in their campaign, if they exist in their worldstate.
 
 ### `"can_dualwield"`
@@ -200,18 +200,18 @@ Allows the Slugbase character to  access Broadcasts in their campaign, if they e
 Ex: `"can_dualwield": true`\
 If true, allows the Player to hold two Spears at once.
 
-### `"feedsfromspears"`
+### `"feeds_from_spears"`
 `boolean`\
-Ex: `"feedsfromspears": true`\
+Ex: `"feeds_from_spears": true`\
 If true along with [can_spawnspears](#can_spawnspears), only allows the Player to feed from freshly made Spears. Diet is adjustable, allowing feeding from plants if specified.
 - Each stab counts towards one pip times the food multiplier for that creature/food.
 - Corpses can be eaten from if their `meatpoints` are above `0`, if the Corpse multiplier is above `0`.
 - Gooieducks are multi-spearable, Popcorn plants and Pomegranates act normally.
 - Currently Slimemold is still inedible due to the inability to spear them, along with other typically non-spearable objects.
 
-### `"cant_swallowobjects"`
+### `"cant_swallow_objects"`
 `boolean`\
-Ex: `"cant_swallowobjects": true`\
+Ex: `"cant_swallow_objects": true`\
 If true, disallows the Player from swallowing/spitting up objects from their stomach.
 
 
@@ -220,12 +220,17 @@ If true, disallows the Player from swallowing/spitting up objects from their sto
 Ex: `"can_slam": true`\
 If true, allows the Player to slam creatures from a high height, inflicting damage like Gourmand.
 
-### `"can_explosivejump"`
-`boolean`\
-Ex: `"can_explosivejump": true`\
-If true, allows the Player to use Artificer's explosive jump, including the down parry ability.
+### `"explosive_jump"`
+`int[]`\
+Ex: `"explosive_jump": [5, 10]`\
+If true, allows the Player to use Artificer's explosive jump, including the down parry ability. The numbers represent the amount of times this ability can be used before approaching Artificer's burnout, and the max amount of times before they die.
 
-### `"can_craftexplosives"`
+### `"craft_explosives_cost"`
+`int`\
+Ex: `"craft_explosives_cost": 1`\
+Allows the Player to craft explosives from Spears and swallow objects to convert them like Artificer, with the equivalent food cost number.
+
+## `"get_karma_from_scavs"`
 `boolean`\
-Ex: `"can_craftexplosives": true`\
-If true, allows the Player to craft explosives from Spears and swallow objects to convert them like Artificer.
+Ex: `"get_karma_from_scavs": true`\
+Allows the Player to gain temporary Karma from holding Scavenger corpses.

@@ -10,7 +10,7 @@ using BepInEx.Logging;
 namespace ExtendedSlugbaseFeatures
 {
 	[BepInPlugin(MOD_ID, "Extended Slugbase Features", "1.0.0")]
-	partial class Plugin : BaseUnityPlugin
+	internal class Plugin : BaseUnityPlugin
 	{
 		internal const string MOD_ID = "magica.extendedslugbasefeatures";
 		internal static new ManualLogSource Logger;
@@ -20,11 +20,12 @@ namespace ExtendedSlugbaseFeatures
 		internal void OnEnable()
 		{
 			Logger = base.Logger;
-			_ = new Resources();
-			On.RainWorld.PostModsInit += RainWorld_PostModsInit;
+			// Ensure the features load
+			_ = new Resources.ExtFeatures();
+			On.RainWorld.PreModsInit += PreModsInit;
 		}
 
-		internal void RainWorld_PostModsInit(On.RainWorld.orig_PostModsInit orig, RainWorld self)
+		internal void PreModsInit(On.RainWorld.orig_PreModsInit orig, RainWorld self)
 		{
 			orig(self);
 
@@ -33,6 +34,7 @@ namespace ExtendedSlugbaseFeatures
 
 			try
 			{
+				// Apply our hooks as early as possible to avoid conflictions with other mods which IL hook onto the same methods
 				PlayerHooks.Apply();
 				WorldHooks.Apply();
 			}
@@ -40,44 +42,6 @@ namespace ExtendedSlugbaseFeatures
 			{
 				UnityEngine.Debug.LogException(ex);
 			}
-		}
-	}
-
-	internal static class PlayerExtension
-	{
-		internal static void MoveCursorToNextSlugcatInstance(this ILCursor cursor, Func<Instruction, bool> instruction)
-		{
-			cursor.GotoNext(MoveType.After,
-							instruction,
-							x => x.MatchCall(out _));
-			cursor.MoveAfterLabels();
-		}
-
-		internal static bool HasFeature(this Player player, Feature<bool> feature)
-		{
-			return player != null && SlugBaseCharacter.TryGet(player.SlugCatClass, out var character) && feature.TryGet(character, out bool hasFeature) && hasFeature;
-		}
-		internal static bool HasFeature(this SlugcatStats.Name name, Feature<bool> feature, out SlugBaseCharacter character)
-		{
-			character = null;
-			return SlugBaseCharacter.TryGet(name, out character) && feature.TryGet(character, out bool hasFeature) && hasFeature;
-		}
-		internal static bool HasFeature(this Player player, Feature<bool> feature, out SlugBaseCharacter character)
-		{
-			character = null;
-			return player != null && SlugBaseCharacter.TryGet(player.SlugCatClass, out character) && feature.TryGet(character, out bool hasFeature) && hasFeature;
-		}
-		internal static bool HasFeature(this Player player, GameFeature<bool> feature)
-		{
-			return player?.room != null && feature.TryGet(player.room.game, out bool hasFeature) && hasFeature;
-		}
-		internal static bool HasFeature(this Player player, PlayerFeature<bool> feature)
-		{
-			return player != null && feature.TryGet(player, out bool hasFeature) && hasFeature;
-		}
-		internal static bool HasFeature(this RainWorldGame game, GameFeature<bool> feature)
-		{
-			return game != null && feature.TryGet(game, out bool hasFeature) && hasFeature;
 		}
 	}
 }
