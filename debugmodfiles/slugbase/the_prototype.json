@@ -1,0 +1,77 @@
+{
+	"id": "magica.Prototype",
+	"name": "The Prototype",
+	"description": "A shapeshifter with the inate ability to hear voices from beyond, that command it to demonstrate some<LINE>custom SlugBase features for us. Abilities can be changed quickly on JSON file save.",
+	"features": {
+		"select_menu_scene": "Slugcat_Prototype",
+		
+		"color": "000000",
+		"custom_colors": [
+		  { "name": "Body", "story": "000000" },
+		  { "name": "Eyes", "story": "FFFFFF" },
+		  { "name": "Gills", "story": "FFFFFF" },
+		  { "name": "Spears", "story": "FFFFFF" }
+		],
+		"diet": {
+		  "base": "Red",
+		  "corpses": 0.5,
+		  "plants": 0.5,
+		  "overrides": {
+			"Scavenger": 1.25,
+			"DangleFruit": 0.5
+		  }
+		},
+		
+		"pop_held_bubblefruit": true,
+		"can_pass_OE_gate": [true, false],
+		"max_cycle_limit": [20, 5],
+		"has_tongue": true,
+		
+		"grab_overrides": {
+			"Rock": "Drag"
+		},
+		"bite_lethality_mutliplier": 0.9,
+		"only_tosses_spears": true,
+		"gill_rows": 5,
+		"spear_specks": [4, 10],
+		"arti_eyes": true,
+		"watcher_blue": 0.5,
+		"saint_fluff": true,
+		"explosive_jump": 20,
+		"take_spears_from_wall": true,
+		"craft_explosives_cost": 0,
+		"get_karma_from_scavs": true,
+		"can_dualwield": true,
+		"saint_eyes": true,
+		"world_state": "Spear",
+		"can_slam": true,
+		"cant_swallow_objects": false,
+		"feeds_from_spears": true,
+		"max_slugpup_spawns": 9999,
+		"spawn_karma_flowers": false,
+		"enlightened": true,
+		"can_access_whitetokens": true,
+		
+		"the_mark": true,
+		"reveal_mark_overtime": 14,
+		
+		"start_room": "SI_C04",
+		"start_position": {
+			"SI_C04": [18, 5]
+		},
+		"start_stomach_item": { "EggBugEgg+AbstractBugEgg": { "hue": 0 } },
+		"intro_cutscene": {	
+			"SI_C04": {
+				"player_grasps": {
+						 "AbstractOverseerCarcass": { "color":"default", "ownerIterator": "2" },
+						 "AbstractDataPearl": { "type":"DataPearl", "dataPearlType": "CC" }
+				},
+				"inputs": [ 
+					{ "time": 50, "x": 1, "y": 1, "crouch": true },
+					{ "time": 20, "x": 1, "y": 1 }
+				],
+				"food": 5.25,
+			}		
+		},
+	}
+}

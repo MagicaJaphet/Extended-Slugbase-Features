@@ -9,7 +9,7 @@ using BepInEx.Logging;
 
 namespace ExtendedSlugbaseFeatures
 {
-	[BepInPlugin(MOD_ID, "Extended Slugbase Features", "1.0.0")]
+	[BepInPlugin(MOD_ID, "Extended Slugbase Features", "1.1.0")]
 	internal class Plugin : BaseUnityPlugin
 	{
 		internal const string MOD_ID = "magica.extendedslugbasefeatures";
@@ -22,10 +22,10 @@ namespace ExtendedSlugbaseFeatures
 			Logger = base.Logger;
 			// Ensure the features load
 			_ = new Resources.ExtFeatures();
-			On.RainWorld.PreModsInit += PreModsInit;
+			On.RainWorld.PostModsInit += PostModsInit;
 		}
 
-		internal void PreModsInit(On.RainWorld.orig_PreModsInit orig, RainWorld self)
+		internal void PostModsInit(On.RainWorld.orig_PostModsInit orig, RainWorld self)
 		{
 			orig(self);
 

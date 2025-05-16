@@ -4,11 +4,12 @@ To go back to documentation, follow [README.md](./README.md). **Bolded text** in
 - Input recording system for intro cutscenes
 
 ## World Features
+- ~~Intro Cutscene~~
+    - Allow the ability to start with food
 - JSON room specific scripts
     - Allows to automatically check for certain conditions when inside of a room to run a script
     - Allows the ability to spawn Creatures
     - Allows for dynamic objects (Like the bomb in Artificer's last dream)
-- **Open OE gate**
 
 ## Player Features
 - **Gourmand crafting**
@@ -16,9 +17,7 @@ To go back to documentation, follow [README.md](./README.md). **Bolded text** in
 - Watcher visibility bonus [Player.VisibilityBonus]
 - **Saint tongue**
 - Saint karma 10 mechanic
-- **Saint's inability to throw spears**
 - **Hunter illness**
-- **Rivulet Bubble Fruit popping**
 - Custom swim speed / water stats
 - Jump heights
 - Configurable cold resistance
