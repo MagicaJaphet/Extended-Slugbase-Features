@@ -157,7 +157,8 @@ If set, spawns in the stomach of the Player on first realization. Allows to pass
             "pckp": true, 
             "mp": true, 
             "crouchToggle": true }
-		]
+		],
+        "food": 0
 	}		
 }
 ```
@@ -172,13 +173,15 @@ Ex:
 		"inputs": [ 
             { "time": 100, "x": 1, "y": 1, "crouch": true },
             { "time": 20, "x": 1, "y": 1 }
-		]
+		],
+        "food": 5
 	}		
 }
 ```
 The intro cutscene  feature is nuanced, and may seem complicated at glance. To start with, we initialize the cutscene by specifying which room the information should be used in. If your Slugbase character has multiple starting rooms, it's good to make a separate script for each possibility.
 
 - `"<room_name>": { }` is used to specify the name of the room this script runs in, which should match the name of one of the rooms in your [start_room](https://slimecubed.github.io/slugbase/articles/features.html#start_room?target="_blank") array. It stores all of the information you'll need inside the brackets. Make sure to parse each room with a comma, if there are multiple.
+- `"food": 0` is used to set the amount of food the slugcat starts with. Quarter values are accepted.
 - `"player_grasps": {   }` is used for storing object information which will spawn objects in the Player's hand, if their grasps are free. This formula follows the same as [start_stomach_item](#start_stomach_item), with the additional bonus of the ability to spawn in 2 or more objects.
 - `"inputs": [   ]` is a list of inputs, translated from the Player.InputPackage class. They do not need a specific key bind set up to work, and rather work based off of the variables passed into it. Parse each input with `{    },`'s.
     - `"repeat": int` is used to specify how many times this input should be repeated. Useful for multi-frame inputs like jump (Simply specifying true on the jump value will only make the Slugcat jump for one frame).
