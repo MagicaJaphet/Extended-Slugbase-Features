@@ -331,8 +331,6 @@ If true, allows the Player to use Artificer's explosive jump, including the down
 `int`\
 Ex: `"craft_explosives_cost": 1`\
 Allows the Player to craft explosives from Spears and swallow objects to convert them like Artificer, with the equivalent food cost number.
->[!Warning]
->This feature is currently not fully implemented, this will be fixed soon but functionally works the same as the normal cost.
 
 ### `"get_karma_from_scavs"`
 `boolean`\

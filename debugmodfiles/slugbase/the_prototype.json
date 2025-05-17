@@ -31,7 +31,7 @@
 			"Rock": "Drag"
 		},
 		"bite_lethality_mutliplier": 0.9,
-		"only_tosses_spears": true,
+		"only_tosses_spears": false,
 		"gill_rows": 5,
 		"spear_specks": [4, 10],
 		"arti_eyes": true,
@@ -39,7 +39,7 @@
 		"saint_fluff": true,
 		"explosive_jump": 20,
 		"take_spears_from_wall": true,
-		"craft_explosives_cost": 0,
+		"craft_explosives_cost": 4,
 		"get_karma_from_scavs": true,
 		"can_dualwield": true,
 		"saint_eyes": true,
@@ -59,7 +59,7 @@
 		"start_position": {
 			"SI_C04": [18, 5]
 		},
-		"start_stomach_item": { "EggBugEgg+AbstractBugEgg": { "hue": 0 } },
+		"start_stomach_item": { "EggBugEgg+AbstractBugEgg": { "hue": 0.2 } },
 		"intro_cutscene": {	
 			"SI_C04": {
 				"player_grasps": {

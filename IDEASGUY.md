@@ -22,6 +22,10 @@ To go back to documentation, follow [README.md](./README.md). **Bolded text** in
 - Jump heights
 - Configurable cold resistance
 - Less/More Player Grasps
+- Customizable exhaustion
+    - Get exhausted only when throwing spears
+- Spear damage stuff?
+- Generate different types of spears from spear specks
 
 ## Cosmetic Features
 - ~~Artificer scar sprite~~

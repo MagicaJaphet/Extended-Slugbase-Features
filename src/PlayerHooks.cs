@@ -80,12 +80,11 @@ namespace ExtendedSlugbaseFeatures
 				/// </summary>
 				private static bool GraspsFeatureConditions(On.Player.orig_GraspsCanBeCrafted orig, Player self)
 				{
-					return orig(self) || (self.HasFeature(ExtFeatures.explosiveCraftCost, out var explosiveCost) && explosiveCost[0] > -1 &&
-						((explosiveCost.Length < 2 && self.FoodInStomach > 0) || (explosiveCost.Length >= 2 && self.FoodInStomach >= explosiveCost[1]))
-						&& (explosiveCost.Length < 3 || self.input[0].y == explosiveCost[2])
+					return orig(self) || (self.HasFeature(ExtFeatures.explosiveCraftCost, out var explosiveCost) && explosiveCost > -1 &&
+						((self.FoodInStomach > explosiveCost)
 						&& self.CraftingResults() != null
 						&& (self.HasFeature(ExtFeatures.rowsAndColumnsSpearSpecks, false)
-						|| ((self.graphicsModule as PlayerGraphics).tailSpecks != null && (self.graphicsModule as PlayerGraphics).tailSpecks.spearProg == 0f)));
+						|| ((self.graphicsModule as PlayerGraphics).tailSpecks != null && (self.graphicsModule as PlayerGraphics).tailSpecks.spearProg == 0f))));
 				}
 
 				/// <summary>
@@ -625,7 +624,7 @@ namespace ExtendedSlugbaseFeatures
 				// Various IL bools that we'd insert onto the stack
 				private static bool ExplosiveCraft(bool result, Player player)
 				{
-					return result || (player.HasFeature(ExtFeatures.explosiveCraftCost, out var explosiveCost) && (explosiveCost.Length == 1 || explosiveCost[1] == player.FreeHand()));
+					return result || player.HasFeature(ExtFeatures.explosiveCraftCost, out var explosiveCost);
 				}
 				private static bool ExplosiveJumps(bool result, Player player)
 				{
@@ -752,6 +751,35 @@ namespace ExtendedSlugbaseFeatures
 						if (TryNext(cursor))
 						{
 							cursor.ImplementILCodeAssumingLdarg0(ExplosiveCraft);
+
+							if (cursor.TryGotoNext(x => x.MatchLdarg(0),
+								x => x.MatchLdcI4(1),
+								x => x.MatchCallOrCallvirt<Player>(nameof(Player.SubtractFood))))
+							{
+								ILCursor jumpCursor = cursor.Clone();
+								jumpCursor.GotoNext(MoveType.After,
+									x => x.MatchCallOrCallvirt<Player>(nameof(Player.SubtractFood)));
+
+								jumpCursor.Emit(OpCodes.Ldarg_0);
+								static void CoverExplosionCost(Player player)
+								{
+									if (player.HasFeature(ExtFeatures.explosiveCraftCost, out int costs))
+									{
+										player.UnprocessFood(costs);
+									}
+								}
+								jumpCursor.EmitDelegate(CoverExplosionCost);
+								jumpCursor.GotoPrev(x => x.MatchLdarg(0));
+								ILLabel jumpIfNotArti = jumpCursor.MarkLabel();
+
+								cursor.Emit(OpCodes.Ldarg_0);
+								static bool isNotArti(Player player)
+								{
+									return player.SlugCatClass != MoreSlugcatsEnums.SlugcatStatsName.Artificer;
+								}
+								cursor.EmitDelegate(isNotArti);
+								cursor.Emit(OpCodes.Brtrue, jumpIfNotArti);
+							}
 						}
 					}
 					catch (Exception ex)
@@ -772,6 +800,24 @@ namespace ExtendedSlugbaseFeatures
 						if (TryNext(cursor))
 						{
 							cursor.ImplementILCodeAssumingLdarg0(ExplosiveCraft);
+
+							if (cursor.TryGotoNext(x => x.MatchLdarg(0),
+								x => x.MatchCallOrCallvirt(typeof(Player).GetProperty(nameof(Player.FoodInStomach)).GetGetMethod())))
+							{
+								ILCursor jumpCursor = cursor.Clone();
+
+								jumpCursor.GotoNext(MoveType.After, x => x.MatchLdcI4(0));
+								ILLabel jumpLabel = jumpCursor.Next.Operand as ILLabel;
+
+								cursor.MoveAfterLabels();
+								cursor.Emit(OpCodes.Ldarg_0);
+								static bool CanAffordCost(Player player)
+								{
+									return player.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Artificer || (player.HasFeature(ExtFeatures.explosiveCraftCost, out int costs) && player.FoodInStomach >= costs);
+								}
+								cursor.EmitDelegate(CanAffordCost);
+								cursor.Emit(OpCodes.Brfalse, jumpLabel);
+							}
 						}
 					}
 					catch (Exception ex)

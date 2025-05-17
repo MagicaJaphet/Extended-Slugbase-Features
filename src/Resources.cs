@@ -155,7 +155,7 @@ namespace ExtendedSlugbaseFeatures
 			/// <summary>
 			/// Allows <see cref="SlugBaseCharacter"/> to use <see cref="Player.FoodInStomach"/> to craft explosives, and the <see cref="int"/> cost in quarter intervals.
 			/// </summary>
-			public static readonly PlayerFeature<int[]> explosiveCraftCost = FeatureTypes.PlayerInts("craft_explosives_cost", 1, 1);
+			public static readonly PlayerFeature<int> explosiveCraftCost = FeatureTypes.PlayerInt("craft_explosives_cost");
 
 			/// <summary>
 			/// Allows <see cref="SlugBaseCharacter"/> to gain <see cref="Player.Karma"/> from holding a <see cref="Scavenger"/> corpse.
@@ -1252,6 +1252,42 @@ namespace ExtendedSlugbaseFeatures
 				player.AddQuarterFood();
 
 			return food > 0f;
+		}
+
+		internal static bool UnprocessFood(this Player player, float food)
+		{
+			int quarterPips = Mathf.RoundToInt(food * 4f);
+
+			for (; quarterPips >= 4; quarterPips -= 4)
+				player.SubtractFood(1);
+
+			for (; quarterPips >= 1; quarterPips--)
+				player.SubtractQuarterFood();
+
+			return food > 0f;
+		}
+
+		internal static void SubtractQuarterFood(this Player player)
+		{
+			if (player.redsIllness != null)
+			{
+				player.redsIllness.AddQuarterFood();
+			}
+			else if (player.FoodInStomach < player.MaxFoodInStomach)
+			{
+				player.playerState.quarterFoodPoints--;
+				if (ModManager.CoopAvailable && player.abstractCreature.world.game.IsStorySession && player.abstractCreature.world.game.Players[0] != player.abstractCreature && !player.isNPC)
+				{
+					PlayerState obj = player.abstractCreature.world.game.Players[0].state as PlayerState;
+					obj.quarterFoodPoints--;
+				}
+
+				if (player.playerState.quarterFoodPoints < 0)
+				{
+					player.SubtractFood(1);
+					player.playerState.quarterFoodPoints = 3;
+				}
+			}
 		}
 
 		/// <summary>
