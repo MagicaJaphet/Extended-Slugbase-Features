@@ -331,6 +331,8 @@ If true, allows the Player to use Artificer's explosive jump, including the down
 `int`\
 Ex: `"craft_explosives_cost": 1`\
 Allows the Player to craft explosives from Spears and swallow objects to convert them like Artificer, with the equivalent food cost number.
+>[!Warning]
+>This feature is currently not fully implemented, this will be fixed soon but functionally works the same as the normal cost.
 
 ### `"get_karma_from_scavs"`
 `boolean`\
@@ -348,6 +350,6 @@ Ex: `"only_tosses_spears": true`\
 Overrides the Player's ability to throw spears with Saint's spear toss.
 
 ### `"take_spears_from_wall"`
-`boolean'\
+`boolean`\
 Ex: `"take_spears_from_wall": true`\
 Allows Player to take embedded spears from walls like Artificer.
