@@ -1357,7 +1357,7 @@ namespace ExtendedSlugbaseFeatures
 					return (shouldReturnTrue && value != null) || (!shouldReturnTrue && value == null);
 				}
 			}
-			return false;
+			return !shouldReturnTrue;
 		}
 		/// <summary>
 		/// Explicit check for if a <see cref="Feature"/>'s return value is not default by our standards.
@@ -1392,7 +1392,7 @@ namespace ExtendedSlugbaseFeatures
 					return (shouldReturnTrue && value != null) || (!shouldReturnTrue && value == null);
 				}
 			}
-			return false;
+			return !shouldReturnTrue;
 		}
 
 		/// <summary>
