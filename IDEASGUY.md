@@ -26,6 +26,7 @@ To go back to documentation, follow [README.md](./README.md). **Bolded text** in
     - Get exhausted only when throwing spears
 - Spear damage stuff?
 - Generate different types of spears from spear specks
+- Inability to use passages on Sleep/Death screen
 
 ## Cosmetic Features
 - ~~Artificer scar sprite~~

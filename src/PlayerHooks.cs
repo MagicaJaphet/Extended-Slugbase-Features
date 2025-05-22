@@ -1269,22 +1269,22 @@ namespace ExtendedSlugbaseFeatures
 					{
 						if (PlayerFeatures.CustomColors.TryGet(character, out var slots) && slots.Length > 1)
 						{
-							ColorSlot slot = slots.Where(x => x.Name == "Gills").FirstOrDefault();
-							Color defaultCol = slots[0].Default;
+							ColorSlot gills = slots.Where(x => x.Name == "Gills").FirstOrDefault();
+							ColorSlot body = slots.Where(x => x.Name == "Body").FirstOrDefault();
 
-							if (slot != null)
+							if (gills != null && body != null)
 							{
-								if (self.player.abstractCreature.world.game.IsArenaSession && slot != null)
+								if (self.player.abstractCreature.world.game.IsArenaSession)
 								{
 									int playerNum = self.player.playerState.playerNumber;
-									if (slot.Variants.Length >= playerNum + 1)
+									if (gills.Variants.Length >= playerNum + 1 && body.Variants.Length >= playerNum + 1)
 									{
-										self.gills.SetGillColors(defaultCol, slot.Variants[playerNum]);
+										self.gills.SetGillColors(body.Variants[playerNum], gills.Variants[playerNum]);
 									}
 								}
-								else if (defaultCol != null)
+								else
 								{
-									self.gills.SetGillColors(defaultCol, slot.Default);
+									self.gills.SetGillColors(body.Default, gills.Default);
 								}
 							}
 						}
