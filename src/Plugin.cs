@@ -6,6 +6,10 @@ using MonoMod.Cil;
 using MoreSlugcats;
 using Mono.Cecil.Cil;
 using BepInEx.Logging;
+using MonoMod.RuntimeDetour;
+using ExtendedSlugbaseFeatures.Hooks;
+using ExtendedSlugbaseFeatures.Helpers;
+using ExtendedSlugbaseFeatures.Resources;
 
 namespace ExtendedSlugbaseFeatures
 {
@@ -14,34 +18,30 @@ namespace ExtendedSlugbaseFeatures
 	{
 		internal const string MOD_ID = "magica.extendedslugbasefeatures";
 		internal static new ManualLogSource Logger;
-		internal bool isInit;
 
 		// Add hooks
 		internal void OnEnable()
 		{
 			Logger = base.Logger;
 			// Ensure the features load
-			_ = new Resources.ExtFeatures();
-			On.RainWorld.PostModsInit += PostModsInit;
-		}
-
-		internal void PostModsInit(On.RainWorld.orig_PostModsInit orig, RainWorld self)
-		{
-			orig(self);
-
-			if (isInit) return;
-			isInit = true;
-
-			try
+			_ = new Features();
+			_ = new RoomSpecificScriptHelpers.CustomCutscene.CutsceneID("null", false);
+			_ = RoomSpecificScriptHelpers.CustomCutscene.Registry;
+			On.RainWorld.PostModsInit += Extras.WrapInit((rainWorld) =>
 			{
-				// Apply our hooks as early as possible to avoid conflictions with other mods which IL hook onto the same methods
+				Resources.Resources.Enums.Register();
+				RoomSpecificScriptHelpers.ScanFiles();
+
+				// Apply our hooks as late as possible to avoid conflictions with other mods which IL hook onto the same methods
 				PlayerHooks.Apply();
 				WorldHooks.Apply();
-			}
-			catch (Exception ex)
-			{
-				UnityEngine.Debug.LogException(ex);
-			}
+				ResourceHooks.Apply();
+			});
+		}
+
+		public void Update()
+		{
+			RoomSpecificScriptHelpers.CustomCutscene.Registry.ReloadChangedFiles();
 		}
 	}
 }

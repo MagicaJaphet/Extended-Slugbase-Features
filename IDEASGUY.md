@@ -27,6 +27,7 @@ To go back to documentation, follow [README.md](./README.md). **Bolded text** in
 - Spear damage stuff?
 - Generate different types of spears from spear specks
 - Inability to use passages on Sleep/Death screen
+- Change karma flower spawn behavior to include monk spawning (true equals karma flower on every death)
 
 ## Cosmetic Features
 - ~~Artificer scar sprite~~

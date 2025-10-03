@@ -83,13 +83,38 @@ These do not require any additional DLC to use.
 
 
 ## General Features
-### `"watcher_blue"`
-`float`\
-Ex: `"watcher_blue": 1`\
-By default, when setting a [custom_colors](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#custom_colors?target="_blank") slot to pure black ``#000000``, which is usually used for transparency, it will attempt to use the palette's black color instead. This setting when specified, will use Nightcat or Watcher's blueish black color to the specified amount.
-```csharp
-Color.Lerp(palette.blackColor, Custom.HSL2RGB(0.63055557f, 0.54f, 0.5f), Mathf.Lerp(0.08f, 0.04f, palette.darkness) * <watcher_blue>)
+### `"use_blackcolor"`
+```JSON
+{
+    "fades": [ 1, 1 ],
+    "variance": [ 0, 1 ]
+},
 ```
+Ex: 
+```JSON
+"custom_colors": [
+    { "name": "Body", "story": "F00000" },
+    { "name": "Eyes", "story": "FFFFFF" },
+    { "name": "Gills", "story": "FFFFFF" },
+    { "name": "Spears", "story": "FFFFFF" }
+],
+
+"use_blackcolor": {
+    "fades": [ 0.8, 0, 0, 0 ],
+    "variance": [ 0.2, 0.4 ]
+}
+```
+By default, when setting a [custom_colors](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#custom_colors?target="_blank") slot to pure black ``#000000``, which is usually used for transparency, it will attempt to use the palette's black color instead. When set to pure black the game will use Watcher's blue, setting the ``custom_color`` to anything other than pure black will convert that color slot to the palette's black color instead when ``fade > 0``. Each ``fade`` float corresponds to the respective ``custom_color`` slot in order of how they are in the JSON. ``variance`` only accepts up to two floats.
+```csharp
+Color.Lerp(<custom_color> == Color.black ? Custom.HSL2RGB(0.63055557f, 0.54f, 0.5f) : <custom_color>, palette.blackColor, Mathf.Lerp(<variance>.Length >= 1 ? variance[0] : 0.08f, <variance>.Length >= 2 ? <variance>[1] : 0.04f, palette.darkness) : Mathf.Lerp(0.08f, 0.04f, palette.darkness)) * <fades>[<slot_index>]);
+```
+This seems like a complex equation, the short of how the game handles ``custom_color`` goes in this logic:
+- If ``custom_color`` is pure black, fade from ``palette.blackColor`` to ``Custom.HSL2RGB(0.63055557f, 0.54f, 0.5f)`` (Which is a blueish color), otherwise fade ``custom_color`` to ``palette.blackColor``.
+    - The logic of the color is flipped depending on if the starting color ends up being ``palette.blackColor``. If true, ``1`` changes the black color to the blueish one of Watcher.
+- ``"variance"`` controls how much the ``darkness`` of a palette affects the color fade.
+    - Pure black with a positive variance converts to the blueish color.
+    - Otherwise, positive variance converts to ``palette.blackColor`` as the room gets darker.
+    - Because of this, negative values are accepted for variance to create the opposite effect.
 
 ## Gameplay Features
 
@@ -107,8 +132,7 @@ Allows the ability to take embedded spears out of walls.
 ```
 Ex:
 ```JSON
-"start_position":
-{
+"start_position": {
     "SI_C04": [20, 5],
     "SU_A07": [10, 10]
 }
@@ -197,10 +221,25 @@ The intro cutscene  feature is nuanced, and may seem complicated at glance. To s
 
 There is currently no tool to translate these inputs into this specified format, but some other mods like Preservatory include built in debug tools for recording inputs. Inputs can be updated in live game time, and replayed by restarting the cycle (Fastest way is pressing R in Dev Tools).
 
+### `"overseer_override"`
+```JSON
+[
+    { "owner": 1, "color": "color" }
+]
+```
+Ex:
+```JSON
+"overseer_overwrite": [
+    { "owner": 2, "color": "FF0000" }
+]
+```
+Overrides existing ``ownerIterator`` colors when present, or adds new ones which can be used with [guide_overseer](https://slimecubed.github.io/slugbase/articles/features.html#guide_overseer).
+
 ### `"grab_overrides"`
 ```JSON
 {
-	"<AbstractPhysicalObject.Type>": "<Player.ObjectGrabability>"
+	"<AbstractPhysicalObject.Type>": "<Player.ObjectGrabability>",
+	"<CreatureTemplate.Type>": "<Player.ObjectGrabability>"
 },
 ```
 Ex:
@@ -210,7 +249,7 @@ Ex:
 	"JetFish": "OneHand",
 },
 ```
-Allows for custom grabability requirement overrides, enabling the ability to make normally one/two handed items have a different grabbing functionality. It does not affect the weight of the object, but does affect how the slugcat holds it.
+Allows for custom grabability requirement overrides, enabling the ability to make normally one/two handed items have a different grabbing functionality. It does not affect the weight of the object, but does affect how the slugcat holds it. Also supports creature overrides, keep in mind that [weight](https://slimecubed.github.io/slugbase/articles/features.html#weight) controls if a creature is considered heavy and slows the Player when holding it.
 #### Valid `Player.ObjectGrabability` types
 - ``BigOneHand`` - Used by weapons.
 - ``CantGrab`` - Makes slugcat unable to grab item, default case.
@@ -257,10 +296,21 @@ When true, allows the Story slugcat to pass through the OE gate. If no second va
 
 ## Cosmetic Features
 These features are for looks only, they do not impact gameplay.
-### `"gill_rows"`
-`int`\
-Ex: `"gill_rows": 3"`\
+### `"gills"`
+```JSON
+{
+    "rows": 3,
+},
+```
+Ex:
+```JSON
+"gills": {
+    "rows": 5,
+},
+```
 Gives the Player cosmetic Rivulet gills, automatically detecting if [custom_colors](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#custom_colors?target="_blank") contains colors for `"Gills"`. The total number of gills will be `gill_rows * 2`.
+> [!NOTE]
+> The ability to further customize gills will be added later.
 
 ### `"saint_fluff"`
 `boolean`\

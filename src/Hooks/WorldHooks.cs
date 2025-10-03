@@ -8,12 +8,11 @@ using SlugBase;
 using Watcher;
 using System.Linq;
 using SlugBase.Features;
-using System.IO;
-using System.Threading;
-using System.Collections.Generic;
-using static ExtendedSlugbaseFeatures.Resources;
+using UnityEngine;
+using ExtendedSlugbaseFeatures.Resources;
+using static ExtendedSlugbaseFeatures.Helpers.RoomSpecificScriptHelpers;
 
-namespace ExtendedSlugbaseFeatures
+namespace ExtendedSlugbaseFeatures.Hooks
 {
 	/// <summary>
 	/// Handles various hooks to other parts of the game with <see cref="SlugcatStats.Name"/> checks.
@@ -34,8 +33,9 @@ namespace ExtendedSlugbaseFeatures
 		internal static void Apply()
 		{
 			On.RainWorldGame.TryGetPlayerStartPos += RainWorldGame_TryGetPlayerStartPos;
-			On.Room.Loaded += IntroCutsceneHandler;
+			IL.Room.Loaded += Room_Loaded;
 			new Hook(typeof(StoryGameSession).GetProperty(nameof(StoryGameSession.slugPupMaxCount), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).GetGetMethod(), SpawnSlugPups);
+			new Hook(typeof(OverseerGraphics).GetProperty(nameof(OverseerGraphics.MainColor), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).GetGetMethod(), OverseerColorOverride);
 		}
 
 		/// <summary>
@@ -43,7 +43,7 @@ namespace ExtendedSlugbaseFeatures
 		/// </summary>
 		internal static bool RainWorldGame_TryGetPlayerStartPos(On.RainWorldGame.orig_TryGetPlayerStartPos orig, string room, out IntVector2 pos)
 		{
-			if (Custom.rainWorld.inGameSlugCat != null && SlugBaseCharacter.TryGet(Custom.rainWorld.inGameSlugCat, out var character) && ExtFeatures.possibleSpawnPositons.TryGet(character, out var startRooms) && startRooms.TryGetValue(room, out pos))
+			if (Custom.rainWorld.inGameSlugCat != null && SlugBaseCharacter.TryGet(Custom.rainWorld.inGameSlugCat, out var character) && Features.possibleSpawnPositons.TryGet(character, out var startRooms) && startRooms.TryGetValue(room, out pos))
 			{
 				return pos != null;
 			}
@@ -51,16 +51,43 @@ namespace ExtendedSlugbaseFeatures
 			return orig(room, out pos);
 		}
 
-		/// <summary>
-		/// Allows <see cref="SlugBaseCharacter"/> to create a <see cref="RoomSpecificScript"/> to control the slugcat and spawn external objects for a period of time.
-		/// </summary>
-		private static void IntroCutsceneHandler(On.Room.orig_Loaded orig, Room self)
+		private static void Room_Loaded(ILContext il)
 		{
-			orig(self);
-
-			if (self?.game != null && self.game.IsStorySession && self.game.GetStorySession.saveState.cycleNumber == 0 && ExtFeatures.introCutsceneDict.TryGet(self.game, out var introVariables) && GameFeatures.StartRoom.TryGet(self.game, out string[] rooms) && rooms.Contains(self.abstractRoom.name) && introVariables.TryGetValue(self.abstractRoom.name, out var dict))
+			try
 			{
-				self.AddObject(new Scripts.MovementScript(self, dict));
+				ILCursor cursor = new(il);
+
+				if (cursor.TryGotoNext(x => x.MatchLdarg(0),
+					x => x.MatchCallOrCallvirt(out _),
+					x => x.MatchLdcI4(0),
+					x => x.MatchStfld<AbstractRoom>(nameof(AbstractRoom.firstTimeRealized))))
+				{
+					cursor.MoveAfterLabels();
+					cursor.Emit(OpCodes.Ldarg_0);
+					static void IntroHandler(Room self)
+					{
+						if (self?.game != null && self.game.GetStorySession?.saveState.cycleNumber == 0 &&
+						Features.introCutscene.TryGet(self.game, out var introCutscene) &&
+						self.abstractRoom.firstTimeRealized && GameFeatures.StartRoom.TryGet(self.game, out var startRooms) && startRooms.Contains(self.abstractRoom.name)
+						&& CustomCutscene.Registry.TryGet(introCutscene, out var cutscene))
+						{
+							if (cutscene != null)
+							{ 
+								UnityEngine.Debug.Log("Intro cutscene found!");
+								self.AddObject(new ScriptTrigger(self, cutscene));
+							}
+							else
+							{
+								Plugin.Logger.LogError($"Could not find cutscene with ID {introCutscene.value}!");
+							}
+						}
+					}
+					cursor.EmitDelegate(IntroHandler);
+				}
+			}
+			catch (Exception ex)
+			{
+				UnityEngine.Debug.LogException(ex);
 			}
 		}
 
@@ -69,9 +96,19 @@ namespace ExtendedSlugbaseFeatures
 		/// </summary>
 		internal static int SpawnSlugPups(Func<StoryGameSession, int> orig, StoryGameSession self)
 		{
-			if (ModManager.MSC && self.game != null && ExtFeatures.maxSlugpupSpawns.TryGet(self.game, out int maxPups))
+			if (ModManager.MSC && self.game != null && Features.maxSlugpupSpawns.TryGet(self.game, out int maxPups))
 			{
 				return maxPups;
+			}
+
+			return orig(self);
+		}
+
+		internal static Color OverseerColorOverride(Func<OverseerGraphics, Color> orig, OverseerGraphics self)
+		{
+			if (!self.overseer.SafariOverseer && !self.overseer.SandboxOverseer && self.overseer.abstractCreature.world.game.HasFeature(Features.overseerOverwrite, out var overrides) && overrides.TryGetValue((self.overseer.abstractCreature.abstractAI as OverseerAbstractAI).ownerIterator, out var overrideColor))
+			{
+				return overrideColor;
 			}
 
 			return orig(self);
@@ -107,7 +144,7 @@ namespace ExtendedSlugbaseFeatures
 					cursor.Emit(OpCodes.Ldarg_0);
 					static bool HasBroadcasts(Room self)
 					{
-						return self.game.HasFeature(ExtFeatures.canProcessWhiteTokens, false);
+						return self.game.HasFeature(Features.canProcessWhiteTokens, false);
 					}
 					cursor.EmitDelegate(HasBroadcasts);
 
@@ -119,7 +156,7 @@ namespace ExtendedSlugbaseFeatures
 				cursor.Emit(OpCodes.Ldarg_0);
 				static bool DontSpawnKarmaFlowers(bool isRed, Room self)
 				{
-					return isRed && (!ExtFeatures.shouldSpawnKarmaFlowers.TryGet(self.game, out bool canSpawn) || canSpawn);
+					return isRed && (!Features.shouldSpawnKarmaFlowers.TryGet(self.game, out bool canSpawn) || canSpawn);
 				}
 				cursor.EmitDelegate(DontSpawnKarmaFlowers);
 			}
@@ -144,19 +181,56 @@ namespace ExtendedSlugbaseFeatures
 		/// <returns></returns>
 		private static bool RegionGate_customOEGateRequirements(On.RegionGate.orig_customOEGateRequirements orig, RegionGate self)
 		{
-			if (self.room.game.HasFeature(ExtFeatures.openOEGate, out bool[] flags) && flags[0] && ((flags.Length == 2 && !flags[1]) || (self.room.game.IsStorySession && (self.room.game.rainWorld.progression.miscProgressionData.beaten_Gourmand || self.room.game.rainWorld.progression.miscProgressionData.beaten_Gourmand_Full || MoreSlugcats.MoreSlugcats.chtUnlockOuterExpanse.Value))))
-			{
-				return true;
-			}
-			return orig(self);
+			return orig(self)
+				|| (self.room.game.HasFeature(Features.openOEGate, out bool[] flags) && flags[0] 
+				&& (flags.Length == 2 && !flags[1] || self.room.game.IsStorySession && (self.room.game.rainWorld.progression.miscProgressionData.beaten_Gourmand || self.room.game.rainWorld.progression.miscProgressionData.beaten_Gourmand_Full || MoreSlugcats.MoreSlugcats.chtUnlockOuterExpanse.Value)));
 		}
 	}
 	internal class SaintHooks
 	{
 		internal static void Apply()
 		{
+			On.HUD.RainMeter.Update += RainMeter_Update;
+			On.HUD.RainMeter.ctor += RainMeter_ctor;
+			On.HUD.RainMeter.Draw += RainMeter_Draw;
 			IL.Ghost.Update += Ghost_Update;
 			new Hook(typeof(SaveState).GetProperty(nameof(SaveState.CanSeeVoidSpawn), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public).GetGetMethod(), SpirituallyEnlightened);
+		}
+
+		/// <summary>
+		/// Fixes Slugbase issue where the <see cref="SlugcatStats.Timeline.Saint"/> doesn't recognize <see cref="SlugBaseCharacter"/>'s timeline point.
+		/// </summary>
+		private static void RainMeter_Update(On.HUD.RainMeter.orig_Update orig, HUD.RainMeter self)
+		{
+			if (ModManager.MSC && self.hud.owner.GetOwnerType() == HUD.HUD.OwnerType.Player && (self.hud.owner as Player).abstractCreature.world.game.TimelinePoint == SlugcatStats.Timeline.Saint && self.hud.map.RegionName != "HR")
+			{
+				self.halfTimeShown = true;
+			}
+			orig(self);
+		}
+
+		/// <summary>
+		/// Fixes Slugbase issue where the <see cref="SlugcatStats.Timeline.Saint"/> doesn't recognize <see cref="SlugBaseCharacter"/>'s timeline point.
+		/// </summary>
+		private static void RainMeter_ctor(On.HUD.RainMeter.orig_ctor orig, HUD.RainMeter self, HUD.HUD hud, FContainer fContainer)
+		{
+			orig(self, hud, fContainer);
+			if (ModManager.MSC && self.hud.owner.GetOwnerType() == HUD.HUD.OwnerType.Player && (self.hud.owner as Player).abstractCreature.world.game.TimelinePoint == SlugcatStats.Timeline.Saint && self.hud.map.RegionName != "HR")
+			{
+				self.halfTimeShown = true;
+			}
+		}
+
+		/// <summary>
+		/// Fixes Slugbase issue where the <see cref="SlugcatStats.Timeline.Saint"/> doesn't recognize <see cref="SlugBaseCharacter"/>'s timeline point.
+		/// </summary>
+		private static void RainMeter_Draw(On.HUD.RainMeter.orig_Draw orig, HUD.RainMeter self, float timeStacker)
+		{
+			if (ModManager.MSC && self.hud.owner.GetOwnerType() == HUD.HUD.OwnerType.Player && (self.hud.owner as Player).abstractCreature.world.game.TimelinePoint == SlugcatStats.Timeline.Saint && self.hud.map.RegionName != "HR")
+			{
+				return;
+			}
+			orig(self, timeStacker);
 		}
 
 		/// <summary>
@@ -170,7 +244,7 @@ namespace ExtendedSlugbaseFeatures
 
 				static bool CanTalkToGhosts(bool isSlugcat, Ghost self)
 				{
-					return isSlugcat || self.room.game.HasFeature(ExtFeatures.enlightenedState);
+					return isSlugcat || self.room.game.HasFeature(Features.enlightenedState);
 				}
 
 				// if (this.room.game.session is StoryGameSession && ((this.room.game.session as StoryGameSession).saveState.deathPersistentSaveData.theMark || (ModManager.MSC && this.room.game.StoryCharacter == MoreSlugcatsEnums.SlugcatStatsName.Saint) || (ModManager.Watcher && this.room.game.StoryCharacter == WatcherEnums.SlugcatStatsName.Watcher)))
@@ -195,7 +269,7 @@ namespace ExtendedSlugbaseFeatures
 		/// </summary>
 		internal static bool SpirituallyEnlightened(Func<SaveState, bool> orig, SaveState save)
 		{
-			return orig(save) || (Custom.rainWorld.processManager.currentMainLoop is RainWorldGame game && game.HasFeature(ExtFeatures.enlightenedState));
+			return orig(save) || Custom.rainWorld.processManager.currentMainLoop is RainWorldGame game && game.HasFeature(Features.enlightenedState);
 		}
 	}
 }
