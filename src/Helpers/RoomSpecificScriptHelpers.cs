@@ -302,7 +302,7 @@ internal class RoomSpecificScriptHelpers
 
 			foreach (var file in files.Where(file => file.EndsWith(".json")))
 			{
-				if (typeof(JsonRegistry<CutsceneID, CustomCutscene>).GetMethod("IsMostRecent", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(Registry, [file]) is bool isMostRecent && isMostRecent)
+				if (JsonResources.IsMostRecent(Registry, [file]))
 				{
 					try
 					{

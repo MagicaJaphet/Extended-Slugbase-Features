@@ -16,9 +16,10 @@ using UnityEngine;
 internal static class Extras
 {
     private static bool _initialized;
+	private static bool _postinitialized;
 
-    // Ensure resources are only loaded once and that failing to load them will not break other mods
-    public static On.RainWorld.hook_PostModsInit WrapInit(Action<RainWorld> loadResources)
+	// Ensure resources are only loaded once and that failing to load them will not break other mods
+	public static On.RainWorld.hook_PostModsInit WrapPostInit(Action<RainWorld> loadResources)
     {
         return (orig, self) =>
         {
@@ -26,9 +27,9 @@ internal static class Extras
 
             try
             {
-                if (!_initialized)
+                if (!_postinitialized)
                 {
-                    _initialized = true;
+                    _postinitialized = true;
                     loadResources(self);
                 }
             }
@@ -38,4 +39,25 @@ internal static class Extras
             }
         };
     }
+
+	public static On.RainWorld.hook_OnModsInit WrapInit(Action<RainWorld> loadResources)
+	{
+		return (orig, self) =>
+		{
+			orig(self);
+
+			try
+			{
+				if (!_initialized)
+				{
+					_initialized = true;
+					loadResources(self);
+				}
+			}
+			catch (Exception e)
+			{
+				Debug.LogException(e);
+			}
+		};
+	}
 }

@@ -1,4 +1,5 @@
-﻿using SlugBase;
+﻿using ExtendedSlugbaseFeatures.Helpers;
+using SlugBase;
 using SlugBase.Features;
 using System;
 using System.Collections.Generic;
@@ -6,6 +7,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using static ExtendedSlugbaseFeatures.Helpers.RoomSpecificScriptHelpers;
+using static ExtendedSlugbaseFeatures.Helpers.RoomSpecificScriptHelpers.CustomCutscene;
 
 namespace ExtendedSlugbaseFeatures.Resources;
 internal class JsonResources
@@ -51,5 +54,13 @@ internal class JsonResources
 		}
 
 		return [.. json.AsList().Select(JsonUtils.ToBool)];
+	}
+
+	/// <summary>
+	/// Reflected version of Slugbase's method IsMostRecent for Slugbase JSONs.
+	/// </summary>
+	internal static bool IsMostRecent<TKey, TValue>(JsonRegistry<TKey, TValue> registry, object[] value) where TKey : ExtEnum<TKey>
+	{
+		return typeof(JsonRegistry<TKey, TValue>).GetMethod("IsMostRecent", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(registry, value) is bool isMostRecent && isMostRecent;
 	}
 }

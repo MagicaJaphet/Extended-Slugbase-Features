@@ -1,5 +1,5 @@
 # IDEAS
-To go back to documentation, follow [README.md](./README.md). **Bolded text** indicates features that are targeted for the next major release.
+To go back to documentation, follow [README.md](../README.md). **Bolded text** indicates features that are targeted for the next major release.
 ## QoL Features
 - Input recording system for intro cutscenes
 

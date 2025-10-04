@@ -6,6 +6,9 @@ mod/plugins/
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
 # User-specific files
+mod/
+lib/
+.gitattributes
 *.rsuser
 *.suo
 *.user
