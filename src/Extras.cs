@@ -35,7 +35,7 @@ internal static class Extras
             }
             catch (Exception e)
             {
-                Debug.LogException(e);
+                UnityEngine.Debug.LogException(e);
             }
         };
     }
@@ -56,7 +56,7 @@ internal static class Extras
 			}
 			catch (Exception e)
 			{
-				Debug.LogException(e);
+				UnityEngine.Debug.LogException(e);
 			}
 		};
 	}

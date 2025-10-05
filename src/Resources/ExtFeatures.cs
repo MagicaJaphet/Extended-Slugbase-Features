@@ -158,11 +158,6 @@ internal class ExtFeatures
 	public static readonly PlayerFeature<int> explosiveCraftCost = FeatureTypes.PlayerInt("craft_explosives_cost");
 
 	/// <summary>
-	/// Allows <see cref="SlugBaseCharacter"/> to gain <see cref="Player.Karma"/> from holding a <see cref="Scavenger"/> corpse.
-	/// </summary>
-	public static readonly PlayerFeature<bool> getKarmaFromScavs = FeatureTypes.PlayerBool("get_karma_from_scavs");
-
-	/// <summary>
 	/// Allows <see cref="SlugBaseCharacter"/> to hold two <see cref="Spear"/>s.
 	/// </summary>
 	public static readonly PlayerFeature<bool> canDualWield = FeatureTypes.PlayerBool("can_dualwield");
@@ -215,6 +210,11 @@ internal class ExtFeatures
 
 		return overseerColor;
 	});
+
+	/// <summary>
+	/// Allows <see cref="SlugBaseCharacter"/> to gain <see cref="Player.Karma"/> from holding a <see cref="Scavenger"/> corpse.
+	/// </summary>
+	public static readonly GameFeature<bool> getKarmaFromScavs = FeatureTypes.GameBool("get_karma_from_scavs");
 
 	/// <summary>
 	/// Allows <see cref="SlugBaseCharacter"/> to pass OE's gate, with an extra condition to check if Gourmand has been beaten if desired.

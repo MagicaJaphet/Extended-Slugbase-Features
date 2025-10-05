@@ -20,8 +20,8 @@ namespace ExtendedSlugbaseFeatures
 	internal class Plugin : BaseUnityPlugin
 	{
 		internal const string MOD_ID = "magica.extendedslugbasefeatures";
+		internal static string MOD_PATH = "";
 		internal static new ManualLogSource Logger;
-		private List<string> addToStringsQueue = [];
 
 		// Add hooks
 		internal void OnEnable()
@@ -33,13 +33,11 @@ namespace ExtendedSlugbaseFeatures
 			_ = new RoomSpecificScriptHelpers.CustomCutscene.CutsceneID("null", false);
 			_ = RoomSpecificScriptHelpers.CustomCutscene.Registry;
 
-
 			On.RainWorld.OnModsInit += Extras.WrapInit((rainWorld) =>
 			{
 				ModOptions.RegisterOI();
 
-				string modPath = ModManager.ActiveMods.FirstOrDefault(mod => mod.id == MOD_ID).path;
-				Futile.atlasManager.LoadImage(AssetManager.ResolveFilePath($"{modPath}/atlases/icon-SlugBase"));
+				MOD_PATH = ModManager.ActiveMods.FirstOrDefault(mod => mod.id == MOD_ID).path;
 			});
 
 			On.RainWorld.PostModsInit += Extras.WrapPostInit((rainWorld) =>
@@ -47,6 +45,9 @@ namespace ExtendedSlugbaseFeatures
 				_ = new ExtFeatures();
 				Resources.Resources.Enums.Register();
 				RoomSpecificScriptHelpers.ScanFiles();
+
+				UnityEngine.Debug.Log($"File exists : {File.Exists(Path.Combine(MOD_PATH, "atlases", "modicon-slugbase.png"))}");
+				Futile.atlasManager.LoadAtlas(Path.Combine(MOD_PATH, "atlases", "extuisprites"));
 
 				// Apply our hooks as late as possible to avoid conflictions with other mods which IL hook onto the same methods
 				PlayerHooks.Apply();

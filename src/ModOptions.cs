@@ -141,6 +141,35 @@ internal class ModOptions : OptionInterface
 								}
 							}
 
+							if (_playerFeatures.Count > 0)
+							{
+								OpLabel playerFeatureLabel = new(Margin, _jsonBox.CanvasSize.y - offset, Translate("Player Features"), true)
+								{
+									description = Translate("A player feature is a Slugbase feature which is used for the Slugcat's instance in any game mode.")
+								};
+								playerFeatureLabel.SetPos(playerFeatureLabel.pos - new Vector2(0f, playerFeatureLabel.label.FontLineHeight));
+								_temporaryElements.Add(playerFeatureLabel);
+								_jsonBox.AddItems(playerFeatureLabel);
+								offset += playerFeatureLabel.label._textRect.height + (Margin * 2.5f);
+
+								foreach (var mod in _playerFeatures.Keys)
+								{
+									var playerFeatures = _playerFeatures[mod];
+									float xOffset = 0f;
+									foreach (var feature in playerFeatures.Keys)
+									{
+										OpLabelSelectable playerLabel = new(selectableGroup, Margin, _jsonBox.CanvasSize.y - offset, Translate($"slugbase[{feature}]"), feature, mod, !featuresDict.TryGetValue(feature, out _))
+										{
+											description = Translate($"slugbase_description[{feature}]")
+										};
+										_temporaryElements.Add(playerLabel);
+										_jsonBox.AddItems(playerLabel);
+										offset += playerLabel.label._textRect.height + Margin;
+										xOffset += 5f;
+									}
+								}
+							}
+
 							_jsonBox.contentSize = offset;
 						}
 					}
@@ -189,13 +218,11 @@ internal class OpLabelSelectable : OpLabel
 		this.signalText = signalText;
 		enabled = !greyedOut;
 
-		string iconName = $"icon-{mod}";
-
-		UnityEngine.Debug.Log($"Contains {iconName} element {Futile.atlasManager.DoesContainElementWithName(iconName)}");
-		icon = new(Futile.atlasManager.DoesContainElementWithName(iconName) ? iconName : "Circle20")
+		string iconName = $"modicon-{mod.ToLower()}";
+		icon = new(Futile.atlasManager.DoesContainElementWithName(iconName) ? iconName : "pixel")
 		{
 			anchorX = 1f,
-			scale = Futile.atlasManager.DoesContainElementWithName(iconName) ? 1f : 0.4f
+			scale = Futile.atlasManager.DoesContainElementWithName(iconName) ? 1f : 24f
 		};
 		myContainer.AddChild(icon);
 		SetPos(pos + new Vector2(icon.width + (ModOptions.Margin / 2f), 0f));

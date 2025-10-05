@@ -1,16 +1,18 @@
-﻿using System;
-using MonoMod.Cil;
+﻿using ExtendedSlugbaseFeatures.Resources;
 using Mono.Cecil.Cil;
-using MoreSlugcats;
+using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
+using MoreSlugcats;
 using RWCustom;
 using SlugBase;
-using Watcher;
-using System.Linq;
 using SlugBase.Features;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
-using ExtendedSlugbaseFeatures.Resources;
+using Watcher;
 using static ExtendedSlugbaseFeatures.Helpers.RoomSpecificScriptHelpers;
+using static ExtendedSlugbaseFeatures.Hooks.PlayerHooks.MechanicHooks;
 
 namespace ExtendedSlugbaseFeatures.Hooks
 {
@@ -23,6 +25,7 @@ namespace ExtendedSlugbaseFeatures.Hooks
 		{
 			GeneralHooks.Apply();	
 			SpearmasterHooks.Apply();
+			ArtificerHooks.Apply();
 			GourmandHooks.Apply();
 			SaintHooks.Apply();
 		}
@@ -32,10 +35,19 @@ namespace ExtendedSlugbaseFeatures.Hooks
 	{
 		internal static void Apply()
 		{
+			On.KarmaFlower.CanSpawnKarmaFlower += KarmaFlower_CanSpawnKarmaFlower;
 			On.RainWorldGame.TryGetPlayerStartPos += RainWorldGame_TryGetPlayerStartPos;
 			IL.Room.Loaded += Room_Loaded;
 			new Hook(typeof(StoryGameSession).GetProperty(nameof(StoryGameSession.slugPupMaxCount), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).GetGetMethod(), SpawnSlugPups);
 			new Hook(typeof(OverseerGraphics).GetProperty(nameof(OverseerGraphics.MainColor), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).GetGetMethod(), OverseerColorOverride);
+		}
+
+		/// <summary>
+		/// Changes if <see cref="KarmaFlower"/> spawn in the <see cref="SlugBaseCharacter"/>'s campaign.
+		/// </summary>
+		private static bool KarmaFlower_CanSpawnKarmaFlower(On.KarmaFlower.orig_CanSpawnKarmaFlower orig, Room room)
+		{
+			return orig(room) && (!room.game.HasFeature(ExtFeatures.shouldSpawnKarmaFlowers, out bool shouldSpawn) || shouldSpawn);
 		}
 
 		/// <summary>
@@ -122,7 +134,7 @@ namespace ExtendedSlugbaseFeatures.Hooks
 		}
 
 		/// <summary>
-		/// Allows <see cref="SlugBaseCharacter"/> to use the Spearmaster broadcast mechanic, if the <see cref="CollectToken.whiteToken"/> object exists in it's world state, and change if <see cref="KarmaFlower"/> spawn.
+		/// Allows <see cref="SlugBaseCharacter"/> to use the Spearmaster broadcast mechanic, if the <see cref="CollectToken.whiteToken"/> object exists in it's world state.
 		/// </summary>
 		internal static void Room_Loaded(ILContext il)
 		{
@@ -149,16 +161,6 @@ namespace ExtendedSlugbaseFeatures.Hooks
 					cursor.EmitDelegate(HasBroadcasts);
 
 				}
-
-				// if (this.game.StoryCharacter != SlugcatStats.Name.Red && (!(this.game.session is StoryGameSession) || !(this.game.session as StoryGameSession).saveState.ItemConsumed(this.world, true, this.abstractRoom.index, num21)))
-				cursor.MoveToNextSlugcat(typeof(SlugcatStats.Name).GetField(nameof(SlugcatStats.Name.Red)));
-
-				cursor.Emit(OpCodes.Ldarg_0);
-				static bool DontSpawnKarmaFlowers(bool isRed, Room self)
-				{
-					return isRed && (!ExtFeatures.shouldSpawnKarmaFlowers.TryGet(self.game, out bool canSpawn) || canSpawn);
-				}
-				cursor.EmitDelegate(DontSpawnKarmaFlowers);
 			}
 			catch (Exception ex)
 			{
@@ -166,6 +168,36 @@ namespace ExtendedSlugbaseFeatures.Hooks
 			}
 		}
 	}
+
+	internal class ArtificerHooks
+	{
+		internal static void Apply()
+		{
+			IL.RainWorldGame.Update += RainWorldGame_Update;
+		}
+
+		private static void RainWorldGame_Update(ILContext il)
+		{
+			try
+			{
+				ILCursor cursor = new(il);
+
+				if (cursor.MoveToNextSlugcat(typeof(MoreSlugcatsEnums.SlugcatStatsName).GetField(nameof(MoreSlugcatsEnums.SlugcatStatsName.Artificer))))
+				{
+					static bool GetsKarmaFromScavs(bool isArtificer, RainWorldGame self)
+					{
+						return isArtificer || self.HasFeature(ExtFeatures.getKarmaFromScavs);
+					}
+					cursor.ImplementILCodeAssumingLdarg0(GetsKarmaFromScavs);
+				}
+			}
+			catch (Exception ex)
+			{
+				UnityEngine.Debug.LogError(ex);
+			}
+		}
+	}
+
 	internal class GourmandHooks
 	{
 		internal static void Apply()
