@@ -24,6 +24,7 @@ namespace ExtendedSlugbaseFeatures
 		{
 			GeneralHooks.Apply();	
 			SpearmasterHooks.Apply();
+			ArtificerHooks.Apply();
 			GourmandHooks.Apply();
 			SaintHooks.Apply();
 		}
@@ -81,7 +82,13 @@ namespace ExtendedSlugbaseFeatures
 	{
 		internal static void Apply()
 		{
+			On.KarmaFlower.CanSpawnKarmaFlower += KarmaFlower_CanSpawnKarmaFlower;
 			IL.Room.Loaded += Room_Loaded;
+		}
+
+		private static bool KarmaFlower_CanSpawnKarmaFlower(On.KarmaFlower.orig_CanSpawnKarmaFlower orig, Room room)
+		{
+			return orig(room) && (!room.game.HasFeature(ExtFeatures.shouldSpawnKarmaFlowers, out bool shouldSpawn) || shouldSpawn);
 		}
 
 		/// <summary>
@@ -110,18 +117,7 @@ namespace ExtendedSlugbaseFeatures
 						return self.game.HasFeature(ExtFeatures.canProcessWhiteTokens, false);
 					}
 					cursor.EmitDelegate(HasBroadcasts);
-
 				}
-
-				// if (this.game.StoryCharacter != SlugcatStats.Name.Red && (!(this.game.session is StoryGameSession) || !(this.game.session as StoryGameSession).saveState.ItemConsumed(this.world, true, this.abstractRoom.index, num21)))
-				cursor.MoveToNextSlugcat(typeof(SlugcatStats.Name).GetField(nameof(SlugcatStats.Name.Red)));
-
-				cursor.Emit(OpCodes.Ldarg_0);
-				static bool DontSpawnKarmaFlowers(bool isRed, Room self)
-				{
-					return isRed && (!ExtFeatures.shouldSpawnKarmaFlowers.TryGet(self.game, out bool canSpawn) || canSpawn);
-				}
-				cursor.EmitDelegate(DontSpawnKarmaFlowers);
 			}
 			catch (Exception ex)
 			{
@@ -129,6 +125,36 @@ namespace ExtendedSlugbaseFeatures
 			}
 		}
 	}
+
+	internal class ArtificerHooks
+	{
+		internal static void Apply()
+		{
+			IL.RainWorldGame.Update += RainWorldGame_Update;
+		}
+
+		private static void RainWorldGame_Update(ILContext il)
+		{
+			try
+			{
+				ILCursor cursor = new(il);
+
+				if (cursor.MoveToNextSlugcat(typeof(MoreSlugcatsEnums.SlugcatStatsName).GetField(nameof(MoreSlugcatsEnums.SlugcatStatsName.Artificer))))
+				{
+					static bool GetsKarmaFromScavs(bool isArtificer, RainWorldGame self)
+					{
+						return isArtificer || self.HasFeature(ExtFeatures.getKarmaFromScavs);
+					}
+					cursor.ImplementILCodeAssumingLdarg0(GetsKarmaFromScavs);
+				}
+			}
+			catch (System.Exception ex)
+			{
+				UnityEngine.Debug.LogException(ex);
+			}
+		}
+	}
+
 	internal class GourmandHooks
 	{
 		internal static void Apply()

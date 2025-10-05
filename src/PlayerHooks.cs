@@ -634,10 +634,6 @@ namespace ExtendedSlugbaseFeatures
 				{
 					return result && player.HasFeature(ExtFeatures.explosiveCraftCost, false);
 				}
-				private static bool ScavCorpseKarma(bool result, Player player)
-				{
-					return result || player.HasFeature(ExtFeatures.getKarmaFromScavs);
-				}
 
 				internal static void Apply()
 				{
@@ -645,11 +641,9 @@ namespace ExtendedSlugbaseFeatures
 					{
 						IL.Player.CanIPickThisUp += Player_CanIPickThisUp;
 						IL.Player.GrabUpdate += Player_GrabUpdate;
-						IL.Player.Update += Player_Update;
 						IL.Player.SpitUpCraftedObject += Player_SpitUpCraftedObject;
 						IL.Player.CraftingResults += Player_CraftingResults;
 						IL.Player.ClassMechanicsArtificer += Player_ClassMechanicsArtificer;
-						new ILHook(typeof(RegionGate).GetProperty(nameof(RegionGate.MeetRequirement), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).GetGetMethod(), GateMeetRequirement);
 					}
 					catch (Exception ex)
 					{
@@ -706,37 +700,6 @@ namespace ExtendedSlugbaseFeatures
 						UnityEngine.Debug.LogException(ex);
 					}
 					
-				}
-
-				/// <summary>
-				/// Allows <see cref="SlugBaseCharacter"/> to gain karma from holding <see cref="Scavenger"/> corpses.
-				/// </summary>
-				/// <param name="il"></param>
-				private static void Player_Update(ILContext il)
-				{
-					try
-					{
-						ILCursor cursor = new(il);
-
-						if (TryNext(cursor)) // base.Hypothermia -= Mathf.Lerp(RainWorldGame.DefaultHeatSourceWarmth, 0f, this.HypothermiaExposure);
-						{
-							// Introduce Artificer warmth mechanic? Likely just better to introduce a general version that's dynamic
-
-							if (TryNext(cursor)) // else if (ModManager.MSC && this.room.game.IsStorySession && this.room.game.StoryCharacter == MoreSlugcatsEnums.SlugcatStatsName.Artificer && this.slugcatStats.name == MoreSlugcatsEnums.SlugcatStatsName.Artificer && this.AI == null && this.room.game.cameras[0] != null && this.room.game.cameras[0].hud != null && this.room.game.cameras[0].hud.karmaMeter != null)
-							{
-								cursor.ImplementILCodeAssumingLdarg0(ScavCorpseKarma);
-
-								if (TryNext(cursor)) // else if (ModManager.MSC && this.room.game.IsStorySession && this.room.game.StoryCharacter == MoreSlugcatsEnums.SlugcatStatsName.Artificer && this.slugcatStats.name == MoreSlugcatsEnums.SlugcatStatsName.Artificer && this.AI == null && this.room.game.cameras[0] != null && this.room.game.cameras[0].hud != null && this.room.game.cameras[0].hud.karmaMeter != null)
-								{
-									cursor.ImplementILCodeAssumingLdarg0(ScavCorpseKarma);
-								}
-							}
-						}
-					}
-					catch (Exception ex)
-					{
-						UnityEngine.Debug.LogException(ex);
-					}
 				}
 
 				/// <summary>
@@ -915,29 +878,6 @@ namespace ExtendedSlugbaseFeatures
 							}
 						}
 
-					}
-					catch (Exception ex)
-					{
-						UnityEngine.Debug.LogException(ex);
-					}
-				}
-
-				private static void GateMeetRequirement(ILContext il)
-				{
-					try
-					{
-						ILCursor cursor = new(il);
-
-						if (TryNext(cursor))
-						{
-							cursor.Emit(OpCodes.Ldarg_0);
-							cursor.Emit(OpCodes.Ldloc_1);
-							static bool ScavCorpseKarmaGate(bool isArti, RegionGate gate, Player player)
-							{
-								return isArti || player.HasFeature(ExtFeatures.getKarmaFromScavs);
-							}
-							cursor.EmitDelegate(ScavCorpseKarmaGate);
-						}
 					}
 					catch (Exception ex)
 					{

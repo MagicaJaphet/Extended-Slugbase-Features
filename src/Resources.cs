@@ -160,7 +160,7 @@ namespace ExtendedSlugbaseFeatures
 			/// <summary>
 			/// Allows <see cref="SlugBaseCharacter"/> to gain <see cref="Player.Karma"/> from holding a <see cref="Scavenger"/> corpse.
 			/// </summary>
-			public static readonly PlayerFeature<bool> getKarmaFromScavs = FeatureTypes.PlayerBool("get_karma_from_scavs");
+			public static readonly GameFeature<bool> getKarmaFromScavs = FeatureTypes.GameBool("get_karma_from_scavs");
 
 			/// <summary>
 			/// Allows <see cref="SlugBaseCharacter"/> to hold two <see cref="Spear"/>s.
