@@ -16,7 +16,7 @@ internal static class Extensions
 {
 	internal static Color GetWatcherColor(this Player self, RoomPalette palette, Color color, int i)
 	{
-		if (self.HasFeature(Features.blackColorFade, out var values) && values.TryGetValue("fades", out var fades) && fades.Length + 1 > i)
+		if (self.HasFeature(ExtFeatures.blackColorFade, out var values) && values.TryGetValue("fades", out var fades) && fades.Length + 1 > i)
 		{
 			return Color.Lerp(color == Color.black ? Custom.HSL2RGB(0.63055557f, 0.54f, 0.5f) : color, palette.blackColor, (values.TryGetValue("variance", out var variances) ? Mathf.Lerp(variances.Length >= 1 ? variances[0] : 0.08f, variances.Length >= 2 ? variances[1] : 0.04f, palette.darkness) : Mathf.Lerp(0.08f, 0.04f, palette.darkness)) * fades[i]);
 		}

@@ -9,7 +9,7 @@ using static ExtendedSlugbaseFeatures.Helpers.PlayerHelpers;
 using static ExtendedSlugbaseFeatures.Helpers.RoomSpecificScriptHelpers;
 
 namespace ExtendedSlugbaseFeatures.Resources;
-internal class Features
+internal class ExtFeatures
 {
 	#region UNIMPLEMENTED
 	/// <summary>
@@ -50,16 +50,16 @@ internal class Features
 			}
 			if (obj.TryGet("variance")?.TryList() is JsonList lerp && lerp.Count > 0)
 			{
-				float[] floats = new float[list.Count];
-				for (int i = 0; i < list.Count; i++)
+				float[] floats = new float[lerp.Count];
+				for (int i = 0; i < lerp.Count; i++)
 				{
-					if (list[i].TryFloat() is float value)
+					if (lerp[i].TryFloat() is float value)
 					{
 						floats[i] = value;
 					}
 					else
 					{
-						throw new JsonException("Value is not a float!", list[i]);
+						throw new JsonException("Value is not a float!", lerp[i]);
 					}
 				}
 				fades.Add("variance", floats);

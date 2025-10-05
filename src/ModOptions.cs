@@ -1,5 +1,6 @@
 ﻿using ExtendedSlugbaseFeatures.Resources;
 using Menu.Remix.MixedUI;
+using RWCustom;
 using SlugBase;
 using SlugBase.Features;
 using System;
@@ -18,12 +19,12 @@ internal class ModOptions : OptionInterface
 	private static OpScrollBox _jsonBox;
 	private static List<UIelement> _temporaryElements = [];
 	private string _currentJSONFile;
-	private static Dictionary<string, Type[]> _gameFeatures = [];
-	private static Dictionary<string, Type[]> _playerFeatures = [];
+	internal static Dictionary<string, Dictionary<string, Type[]>> _gameFeatures = [];
+	internal static Dictionary<string, Dictionary<string, Type[]>> _playerFeatures = [];
 
 	public static ModOptions Instance { get; } = new();
 
-	private float Margin { get; } = 10f;
+	internal static float Margin { get; } = 10f;
 	private float ValueEditArea { get; } = 200f;
 
 	public static void RegisterOI()
@@ -70,26 +71,6 @@ internal class ModOptions : OptionInterface
 
 			_onlyTab.AddItems([slugBaseSelector, _jsonBox]);
 
-			var featureManager = AppDomain.CurrentDomain.GetAssemblies().Where(asm => asm.GetName().Name.ToLower() == "slugbase").FirstOrDefault()?.GetTypes().Where(type => type.Name == "FeatureManager").FirstOrDefault();
-			if (featureManager != null)
-			{
-				var allFeatures = featureManager.GetField("_features", BindingFlags.NonPublic | BindingFlags.Static);
-				if (allFeatures != null && allFeatures.GetValue(null) is Dictionary<string, Feature> featureDict)
-				{
-					foreach (var key in featureDict.Keys.Reverse())
-					{
-						if (featureDict[key].GetType().Name.Contains("Game") && !_gameFeatures.ContainsKey(key))
-						{
-							_gameFeatures.Add(key, featureDict[key].GetType().GetGenericArguments());
-						}
-						else if (!_playerFeatures.ContainsKey(key))
-						{
-							_playerFeatures.Add(key, featureDict[key].GetType().GetGenericArguments());
-						}
-					}
-				}
-			}
-
 			RefreshJSONFeatures();
 		}
 		else
@@ -131,24 +112,33 @@ internal class ModOptions : OptionInterface
 							OpSelectableGroup selectableGroup = new(this, _jsonBox);
 
 							float offset = Margin;
-							OpLabel gameFeatureLabel = new(Margin, _jsonBox.CanvasSize.y - offset, Translate("Game Features"), true)
+							if (_gameFeatures.Count > 0)
 							{
-								description = Translate("A game feature is a Slugbase feature which is used exclusively for the slugcat's campaign.")
-							};
-							gameFeatureLabel.SetPos(gameFeatureLabel.pos - new Vector2(0f, gameFeatureLabel.label.FontLineHeight));
-							_temporaryElements.Add(gameFeatureLabel);
-							_jsonBox.AddItems(gameFeatureLabel);
-							offset += gameFeatureLabel.label.FontLineHeight + (Margin * 2f);
-
-							foreach (var gameFeature in _gameFeatures.Keys)
-							{
-								OpLabelSelectable gameLabel = new(selectableGroup, Margin, _jsonBox.CanvasSize.y - offset, Translate($"slugbase[{gameFeature}]"), gameFeature, !featuresDict.TryGetValue(gameFeature, out _))
+								OpLabel gameFeatureLabel = new(Margin, _jsonBox.CanvasSize.y - offset, Translate("Game Features"), true)
 								{
-									description = Translate($"slugbase_description[{gameFeature}]")
+									description = Translate("A game feature is a Slugbase feature which is used exclusively for the slugcat's campaign.")
 								};
-								_temporaryElements.Add(gameLabel);
-								_jsonBox.AddItems(gameLabel);
-								offset += gameLabel.label.FontLineHeight + Margin;
+								gameFeatureLabel.SetPos(gameFeatureLabel.pos - new Vector2(0f, gameFeatureLabel.label.FontLineHeight));
+								_temporaryElements.Add(gameFeatureLabel);
+								_jsonBox.AddItems(gameFeatureLabel);
+								offset += gameFeatureLabel.label._textRect.height + (Margin * 2.5f);
+
+								foreach (var mod in _gameFeatures.Keys)
+								{
+									var gameFeatures = _gameFeatures[mod];
+									float xOffset = 0f;
+									foreach (var feature in gameFeatures.Keys)
+									{
+										OpLabelSelectable gameLabel = new(selectableGroup, Margin, _jsonBox.CanvasSize.y - offset, Translate($"slugbase[{feature}]"), feature, mod, !featuresDict.TryGetValue(feature, out _))
+										{
+											description = Translate($"slugbase_description[{feature}]")
+										};
+										_temporaryElements.Add(gameLabel);
+										_jsonBox.AddItems(gameLabel);
+										offset += gameLabel.label._textRect.height + Margin;
+										xOffset += 5f;
+									}
+								}
 							}
 
 							_jsonBox.contentSize = offset;
@@ -188,22 +178,37 @@ internal class OpLabelSelectable : OpLabel
 	private bool enabled;
 	private GlowGradient glow;
 	private float glowTimer;
+	private FSprite icon;
 	internal static readonly float greyedOutAlpha = 0.6f;
 	internal static readonly float glowTimerMax = 100f;
+	internal static readonly Color darkGrey = new(0.35f, 0.35f, 0.35f);
 
-	internal OpLabelSelectable(OpSelectableGroup owner, float posX, float posY, string text, string signalText, bool greyedOut = false) : base(posX, posY, text)
+	internal OpLabelSelectable(OpSelectableGroup owner, float posX, float posY, string text, string signalText, string mod, bool greyedOut = false) : base(posX, posY, text)
 	{
 		this.owner = owner;
 		this.signalText = signalText;
 		enabled = !greyedOut;
 
-		glow = new GlowGradient(myContainer, new(), new(owner.container.CanvasSize.x, 50f))
+		string iconName = $"icon-{mod}";
+
+		UnityEngine.Debug.Log($"Contains {iconName} element {Futile.atlasManager.DoesContainElementWithName(iconName)}");
+		icon = new(Futile.atlasManager.DoesContainElementWithName(iconName) ? iconName : "Circle20")
 		{
-			color = greyedOut ? Color.grey : Color.white
+			anchorX = 1f,
+			scale = Futile.atlasManager.DoesContainElementWithName(iconName) ? 1f : 0.4f
+		};
+		myContainer.AddChild(icon);
+		SetPos(pos + new Vector2(icon.width + (ModOptions.Margin / 2f), 0f));
+		icon.SetPosition(label.GetPosition().x - (ModOptions.Margin / 2f), label.GetPosition().y);
+
+
+		glow = new GlowGradient(myContainer, new(), new(owner.container.CanvasSize.x * 2f, 50f))
+		{
+			color = greyedOut ? darkGrey : Color.white
 		};
 		if (greyedOut)
 		{
-			color = greyedOut ? Color.grey : Color.white;
+			color = greyedOut ? darkGrey : Color.white;
 		}
 	}
 
@@ -218,7 +223,7 @@ internal class OpLabelSelectable : OpLabel
 		if (MouseOver)
 		{
 			glow.sprite.isVisible = true;
-			glow.pos = label.GetPosition() - new Vector2(0, 25f);
+			glow.pos = label.GetPosition() - new Vector2(glow.size.x / 4f, 25f);
 			glow.alpha = Mathf.Lerp(enabled ? 0.4f : 0.2f, enabled ? 0.7f : 0.4f, Mathf.Sin((glowTimer / glowTimerMax) * 3.1416f));
 		}
 		else

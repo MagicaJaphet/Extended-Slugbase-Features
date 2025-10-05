@@ -202,7 +202,7 @@ Ex:
 	}		
 }
 ```
-The intro cutscene  feature is nuanced, and may seem complicated at glance. To start with, we initialize the cutscene by specifying which room the information should be used in. If your Slugbase character has multiple starting rooms, it's good to make a separate script for each possibility.
+An automated input script that plays when first starting the campaign. The intro cutscene feature is nuanced, and may seem complicated at glance. To start with, we initialize the cutscene by specifying which room the information should be used in. If your Slugbase character has multiple starting rooms, it's good to make a separate script for each possibility.
 
 - `"<room_name>": { }` is used to specify the name of the room this script runs in, which should match the name of one of the rooms in your [start_room](https://slimecubed.github.io/slugbase/articles/features.html#start_room?target="_blank") array. It stores all of the information you'll need inside the brackets. Make sure to parse each room with a comma, if there are multiple.
 - `"food": 0` is used to set the amount of food the slugcat starts with. Quarter values are accepted.

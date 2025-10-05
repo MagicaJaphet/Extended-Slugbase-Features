@@ -18,7 +18,7 @@
 
 	<ItemGroup>
 		<Reference Include="..\lib\*.dll">
-			<Private>false</Private>
+		  <Private>false</Private>
 		</Reference>
 	</ItemGroup>
 

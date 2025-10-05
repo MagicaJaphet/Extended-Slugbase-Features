@@ -43,7 +43,7 @@ namespace ExtendedSlugbaseFeatures.Hooks
 		/// </summary>
 		internal static bool RainWorldGame_TryGetPlayerStartPos(On.RainWorldGame.orig_TryGetPlayerStartPos orig, string room, out IntVector2 pos)
 		{
-			if (Custom.rainWorld.inGameSlugCat != null && SlugBaseCharacter.TryGet(Custom.rainWorld.inGameSlugCat, out var character) && Features.possibleSpawnPositons.TryGet(character, out var startRooms) && startRooms.TryGetValue(room, out pos))
+			if (Custom.rainWorld.inGameSlugCat != null && SlugBaseCharacter.TryGet(Custom.rainWorld.inGameSlugCat, out var character) && ExtFeatures.possibleSpawnPositons.TryGet(character, out var startRooms) && startRooms.TryGetValue(room, out pos))
 			{
 				return pos != null;
 			}
@@ -67,7 +67,7 @@ namespace ExtendedSlugbaseFeatures.Hooks
 					static void IntroHandler(Room self)
 					{
 						if (self?.game != null && self.game.GetStorySession?.saveState.cycleNumber == 0 &&
-						Features.introCutscene.TryGet(self.game, out var introCutscene) &&
+						ExtFeatures.introCutscene.TryGet(self.game, out var introCutscene) &&
 						self.abstractRoom.firstTimeRealized && GameFeatures.StartRoom.TryGet(self.game, out var startRooms) && startRooms.Contains(self.abstractRoom.name)
 						&& CustomCutscene.Registry.TryGet(introCutscene, out var cutscene))
 						{
@@ -96,7 +96,7 @@ namespace ExtendedSlugbaseFeatures.Hooks
 		/// </summary>
 		internal static int SpawnSlugPups(Func<StoryGameSession, int> orig, StoryGameSession self)
 		{
-			if (ModManager.MSC && self.game != null && Features.maxSlugpupSpawns.TryGet(self.game, out int maxPups))
+			if (ModManager.MSC && self.game != null && ExtFeatures.maxSlugpupSpawns.TryGet(self.game, out int maxPups))
 			{
 				return maxPups;
 			}
@@ -106,7 +106,7 @@ namespace ExtendedSlugbaseFeatures.Hooks
 
 		internal static Color OverseerColorOverride(Func<OverseerGraphics, Color> orig, OverseerGraphics self)
 		{
-			if (!self.overseer.SafariOverseer && !self.overseer.SandboxOverseer && self.overseer.abstractCreature.world.game.HasFeature(Features.overseerOverwrite, out var overrides) && overrides.TryGetValue((self.overseer.abstractCreature.abstractAI as OverseerAbstractAI).ownerIterator, out var overrideColor))
+			if (!self.overseer.SafariOverseer && !self.overseer.SandboxOverseer && self.overseer.abstractCreature.world.game.HasFeature(ExtFeatures.overseerOverwrite, out var overrides) && overrides.TryGetValue((self.overseer.abstractCreature.abstractAI as OverseerAbstractAI).ownerIterator, out var overrideColor))
 			{
 				return overrideColor;
 			}
@@ -144,7 +144,7 @@ namespace ExtendedSlugbaseFeatures.Hooks
 					cursor.Emit(OpCodes.Ldarg_0);
 					static bool HasBroadcasts(Room self)
 					{
-						return self.game.HasFeature(Features.canProcessWhiteTokens, false);
+						return self.game.HasFeature(ExtFeatures.canProcessWhiteTokens, false);
 					}
 					cursor.EmitDelegate(HasBroadcasts);
 
@@ -156,7 +156,7 @@ namespace ExtendedSlugbaseFeatures.Hooks
 				cursor.Emit(OpCodes.Ldarg_0);
 				static bool DontSpawnKarmaFlowers(bool isRed, Room self)
 				{
-					return isRed && (!Features.shouldSpawnKarmaFlowers.TryGet(self.game, out bool canSpawn) || canSpawn);
+					return isRed && (!ExtFeatures.shouldSpawnKarmaFlowers.TryGet(self.game, out bool canSpawn) || canSpawn);
 				}
 				cursor.EmitDelegate(DontSpawnKarmaFlowers);
 			}
@@ -182,7 +182,7 @@ namespace ExtendedSlugbaseFeatures.Hooks
 		private static bool RegionGate_customOEGateRequirements(On.RegionGate.orig_customOEGateRequirements orig, RegionGate self)
 		{
 			return orig(self)
-				|| (self.room.game.HasFeature(Features.openOEGate, out bool[] flags) && flags[0] 
+				|| (self.room.game.HasFeature(ExtFeatures.openOEGate, out bool[] flags) && flags[0] 
 				&& (flags.Length == 2 && !flags[1] || self.room.game.IsStorySession && (self.room.game.rainWorld.progression.miscProgressionData.beaten_Gourmand || self.room.game.rainWorld.progression.miscProgressionData.beaten_Gourmand_Full || MoreSlugcats.MoreSlugcats.chtUnlockOuterExpanse.Value)));
 		}
 	}
@@ -244,7 +244,7 @@ namespace ExtendedSlugbaseFeatures.Hooks
 
 				static bool CanTalkToGhosts(bool isSlugcat, Ghost self)
 				{
-					return isSlugcat || self.room.game.HasFeature(Features.enlightenedState);
+					return isSlugcat || self.room.game.HasFeature(ExtFeatures.enlightenedState);
 				}
 
 				// if (this.room.game.session is StoryGameSession && ((this.room.game.session as StoryGameSession).saveState.deathPersistentSaveData.theMark || (ModManager.MSC && this.room.game.StoryCharacter == MoreSlugcatsEnums.SlugcatStatsName.Saint) || (ModManager.Watcher && this.room.game.StoryCharacter == WatcherEnums.SlugcatStatsName.Watcher)))
@@ -269,7 +269,7 @@ namespace ExtendedSlugbaseFeatures.Hooks
 		/// </summary>
 		internal static bool SpirituallyEnlightened(Func<SaveState, bool> orig, SaveState save)
 		{
-			return orig(save) || Custom.rainWorld.processManager.currentMainLoop is RainWorldGame game && game.HasFeature(Features.enlightenedState);
+			return orig(save) || Custom.rainWorld.processManager.currentMainLoop is RainWorldGame game && game.HasFeature(ExtFeatures.enlightenedState);
 		}
 	}
 }

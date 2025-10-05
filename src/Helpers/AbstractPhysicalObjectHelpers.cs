@@ -106,7 +106,7 @@ internal class AbstractPhysicalObjectHelpers
 	/// <summary>
 	/// Taken from DevConsole, a blacklist of Assemblies we should avoid referencing.
 	/// </summary>
-	private static readonly HashSet<string> dllBlacklist = new()
+	internal static readonly HashSet<string> dllBlacklist = new()
 			{
 				"0Harmony",
 				"0Harmony20",
