@@ -93,26 +93,7 @@ namespace ExtendedSlugbaseFeatures
 				}
 			}
 
-			if (feature.GetType().Name.Contains("Game"))
-			{
-				if (!ModOptions._gameFeatures.ContainsKey(originMod)) ModOptions._gameFeatures.Add(originMod, []);
-
-				if (ModOptions._gameFeatures.TryGetValue(originMod, out var features))
-				{
-					Logger.LogInfo($"Added {originMod} feature: {feature.ID}!");
-					features.Add(feature.ID, feature.GetType().GetGenericArguments());
-				}
-			}
-			else
-			{
-				if (!ModOptions._playerFeatures.ContainsKey(originMod)) ModOptions._playerFeatures.Add(originMod, []);
-
-				if (ModOptions._playerFeatures.TryGetValue(originMod, out var features))
-				{
-					Logger.LogInfo($"Added {originMod} feature: {feature.ID}!");
-					features.Add(feature.ID, feature.GetType().GetGenericArguments());
-				}
-			}
+			ModOptions._allFeatures.Add(new(feature, originMod));
 		}
 
 		public void Update()

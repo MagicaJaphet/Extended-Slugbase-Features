@@ -14,33 +14,11 @@ namespace ExtendedSlugbaseFeatures.Resources;
 internal class JsonResources
 {
 	/// <summary>
-	/// Reflected version of <see cref="JsonUtils.AssertLength"/>. Original method is private.
-	/// </summary>
-	public static JsonAny AssertLength(JsonAny json, int minLength, int maxLength = int.MaxValue)
-	{
-		// This method is private in the SlugBase.dll :(
-		if (typeof(FeatureTypes).GetMethod("AssertLength", BindingFlags.NonPublic | BindingFlags.Static).Invoke(json, [json, minLength, maxLength]) is JsonAny any)
-		{
-			return any;
-		}
-		return json;
-	}
-
-	/// <summary>
-	/// Copy of Slugbase's <see cref="Utils.MatchCaseInsensitiveEnum{T}(string)"/> as the Utils class is internal.
-	/// </summary>
-	public static string MatchCaseInsensitiveEnum<T>(string name)
-		where T : ExtEnum<T>
-	{
-		return ExtEnum<T>.values.entries.FirstOrDefault(value => value.Equals(name, StringComparison.InvariantCultureIgnoreCase)) ?? name;
-	}
-
-	/// <summary>
 	/// Extension returning a new <see cref="GameFeatures"/> instance which allows for multiple <see cref="bool"/>.
 	/// </summary>
 	public static GameFeature<bool[]> GameBools(string id, int minLength = 0, int maxLength = int.MaxValue)
 	{
-		return new GameFeature<bool[]>(id, (json) => { return ToBools(AssertLength(json, minLength, maxLength)); });
+		return new GameFeature<bool[]>(id, (json) => { return ToBools(FeatureTypes.AssertLength(json, minLength, maxLength)); });
 	}
 
 	/// <summary>
@@ -55,12 +33,32 @@ internal class JsonResources
 
 		return [.. json.AsList().Select(JsonUtils.ToBool)];
 	}
+}
+
+/// <summary>
+/// A constant setting of a <see cref="SlugBaseCharacter"/>'s world state.
+/// </summary>
+/// <typeparam name="T">The type that stores this setting's information.</typeparam>
+public class TimelineFeature<T> : Feature<T>
+{
+	/// <summary>
+	/// Creates a new <see cref="TimelineFeature{T}"/> with the given <paramref name="id"/>.
+	/// </summary>
+	/// <param name="id">The JSON key.</param>
+	/// <param name="factory">A delegate that parses <see cref="JsonAny"/> into <typeparamref name="T"/>. An exception should be thrown on failure.</param>
+	public TimelineFeature(string id, Func<JsonAny, T> factory) : base(id, factory) { }
 
 	/// <summary>
-	/// Reflected version of Slugbase's method IsMostRecent for Slugbase JSONs.
+	/// Gets the <typeparamref name="T"/> instance assocated with <paramref name="game"/>.
 	/// </summary>
-	internal static bool IsMostRecent<TKey, TValue>(JsonRegistry<TKey, TValue> registry, object[] value) where TKey : ExtEnum<TKey>
+	/// <param name="game">A <see cref="RainWorldGame"/> instance that may belong to a <see cref="SlugBaseCharacter"/>'s timeline with this <see cref="Feature"/>.</param>
+	/// <param name="value">The stored setting, or <typeparamref name="T"/>'s default value if the feature wasn't found.</param>
+	/// <returns><c>true</c> if the <paramref name="game"/>'s <see cref="SlugBaseCharacter"/> timeline point had this feature, <c>false</c> otherwise.</returns>
+	public bool TryGet(RainWorldGame game, out T value)
 	{
-		return typeof(JsonRegistry<TKey, TValue>).GetMethod("IsMostRecent", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(registry, value) is bool isMostRecent && isMostRecent;
+		if (SlugBaseCharacter.TryGet(new(game.TimelinePoint.value, false), out var slugCat))
+			return TryGet(slugCat, out value);
+		value = default;
+		return false;
 	}
 }

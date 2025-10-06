@@ -1,6 +1,7 @@
 ﻿using ExtendedSlugbaseFeatures.Resources;
 using RWCustom;
 using SlugBase;
+using SlugBase.Features;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,7 +56,7 @@ internal class AbstractPhysicalObjectHelpers
 						switch (parameter.Key)
 						{
 							case "spawn_pos":
-								if (parameter.Value.TryList() is JsonList numbers && JsonResources.AssertLength(numbers, 2).TryList() is JsonList outNumbers && outNumbers[0].TryInt() is int x && outNumbers[1].TryInt() is int y)
+								if (parameter.Value.TryList() is JsonList numbers && FeatureTypes.AssertLength(numbers, 2, int.MaxValue).TryList() is JsonList outNumbers && outNumbers[0].TryInt() is int x && outNumbers[1].TryInt() is int y)
 								{
 									SpawnPos = new(x, y);
 								}
