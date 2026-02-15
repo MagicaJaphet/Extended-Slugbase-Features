@@ -16,9 +16,9 @@ Features with ``<optional>`` keys have their default values in their examples. S
 - ``<abstract object>``: A JSON object which contains a string and object dictionary to parse into a type that inherits ``AbstractPhysicalObject``. Will call the class's constructor when attempting to spawn the object. Works very similarly to Dev Console's ``raw_spawn`` command, with allowing additional fields and properties to be set if they are accessible. In simplier terms, accepts a new class instance to create a customizable object or creature.
 ```JSON
 "<AbstractPhysicalObject>": {
-    "<parameter name>": <value>,
-    "<field name>" : <value>,
-    "<property name>" : <value>
+    "<parameter name>": "<value>",
+    "<field name>" : "<value>",
+    "<property name>" : "<value>"
 }
 ```
 
@@ -85,13 +85,13 @@ Limits the slugcat's cycles to the set amount. When reaching the last cycle, for
 ### "creature_relationships"
 ```JSON
 {
-	"<CreatureTemplate.Type>": { "<CreatureTemplate.Relationship.Type>" : float<0-1>, }
+	"<CreatureTemplate.Type>": { "<CreatureTemplate.Relationship.Type>" : float<0-1> }
 }
 ```
 Ex:
 ```JSON
 "creature_relationships": {
-	"LanternMouse": { "Ignore" : 1, }
+	"LanternMouse": { "Ignore" : 1 }
 }
 ```
 Overrides static relationships of creatures with the players in the slugcat's game, creatures with reputations are mostly unaffected by these values. The float value represents the intensity of the relationship.
@@ -103,7 +103,7 @@ Overrides static relationships of creatures with the players in the slugcat's ga
 [
 	{
 		"owner": int,
-		"color": color,
+		"color": color
 	}
 ]
 ```
@@ -112,7 +112,7 @@ Ex:
 "overseer_overwrite": [
 	{
 		"owner": 1,
-		"color": "FF0000",
+		"color": "FF0000"
 	}
 ]
 ```
@@ -219,7 +219,7 @@ Ex:
             "Ash": 0,
             "Void": 0,
             "Noodle": 0,
-            "Singularity": 0,
+            "Singularity": 0
 		},
     },
 }
@@ -236,7 +236,7 @@ When set, the slugcat will have an item in their stomach on their starting cycle
     <optional>"retractable": bool,
     <optional>"length": float,
     <optional>"segments": int,
-	<optional>"retract_speed": float,
+	<optional>"retract_speed": float
 }
 ```
 Ex:
@@ -246,7 +246,7 @@ Ex:
     "retractable": true,
     "length": 150,
     "segments": 20,
-	"retract_speed": 1,
+	"retract_speed": 1
 },
 ```
 
@@ -263,7 +263,7 @@ When present, allows the slugcat to use Saint's tongue ability. There are a lot 
 ```JSON
 {
     "<AbstractPhysicalObject.Type>": "<ObjectGrabability>",
-    "<CreatureTemplate.Type>": "<ObjectGrabability>",
+    "<CreatureTemplate.Type>": "<ObjectGrabability>"
 }
 ```
 Ex:
@@ -271,7 +271,7 @@ Ex:
 "grab_overrides": {
     "JellyFish": "Drag",
     "YellowLizard": "OneHand",
-    "Spear": "OneHand",
+    "Spear": "OneHand"
 }
 ```
 Overrides how the slugcat can grasp object or creature types. To simulate dual wielding spears, set ``Spear`` to ``OneHand``. This does not affect how heavy the object is, as it's relative to the slugcat's mass.
@@ -306,10 +306,10 @@ Ex:
     "explosive_immune": false,
     "mushroom_interactions": {
         "timer": 320,
-        "frames_per_second": 15,
+        "frames_per_second": 15
     },
     "poison_immune": false
-    "pop_bubble_fruit": false,
+    "pop_bubble_fruit": false
 }
 ```
 
@@ -351,7 +351,7 @@ Ex:
 "no_stun_grasp_penalty": {
     "Explosion": true,
     "None": true,
-    "Blunt": true,
+    "Blunt": true
 }
 ```
 Overrides damage types causing slugcat to drop their grasps when stunned. For example, being explosive immune and having no ``Explosion`` damage penalty makes the slugcat not drop their items when taking explosion damage.
@@ -375,7 +375,7 @@ When true, allows slugcat to take spears from walls like Artificer or the remix 
     <optional>"jump_speed": float[1..2],
     <optional>"food_cost": int,
     <optional>"limit_reached_result": "<LimitReached>",
-    <optional>"stun_timers": int[1..2],
+    <optional>"stun_timers": int[1..2]
 }
 ```
 Ex:
@@ -387,7 +387,7 @@ Ex:
     "food_cost": 0,
     "jump_speed": [8],
     "limit_reached_result": "Die",
-    "stun_timers": [60],
+    "stun_timers": [60]
 }
 ```
 Allows the slugcat to double jump, with some customiziability:
@@ -409,7 +409,7 @@ Allows the slugcat to double jump, with some customiziability:
     <optional>"drag": float,
     <optional>"length": float,
     <optional>"width": float,
-    <optional>"spread": float<0-1>,
+    <optional>"spread": float<0-1>
 }
 ```
 Ex:
@@ -418,7 +418,7 @@ Ex:
     "rows": 3,
     "bounciness": 1,
     "drag": 1,
-    "spread": 0.65,
+    "spread": 0.65
 }
 ```
 When present, gives the slugcat Salamander gills like Rivulet, with some customiziability:
@@ -457,7 +457,7 @@ Ex:
     "generation_speed": 0.05,
     "food_cost": 0,
     "head_shaking": true,
-    "dripping": true,
+    "dripping": true
 }
 ```
 When present, allows the slugcat to craft items from specks on their tail like Spearmaster. Has some customizability:
@@ -497,7 +497,7 @@ When present, allows the slugcat to craft items from specks on their tail like S
     <optional>"regurgitate_list": {
         "cost": int,
         "item_pool": [ { "object": { <abstract object> }, "rarity": float<0-1> } ]
-    },
+    }
 },
 ```
 Ex:
@@ -509,7 +509,7 @@ Ex:
             "cost": 1,
             "result": {
                 "AbstractPhysicalObject": {
-                    "type": "ScavengerBomb",
+                    "type": "ScavengerBomb"
                 }
             }
         }
@@ -519,7 +519,7 @@ Ex:
             "cost": 1,
             "result": {
                 "AbstractSpear": {
-                    "explosive": true,
+                    "explosive": true
                 }
             }
         }
@@ -539,14 +539,14 @@ Ex:
             { 
                 "object": { 
                     "AbstractPhysicalObject": {
-                        "type": "ScavengerBomb",
+                        "type": "ScavengerBomb"
                     }
                 },
                 "rarity": 1,
             }
         ]
-    },
-},
+    }
+}
 ```
 When present and valid recipes are given, allows the slugcat to craft, reguritate, or swallow items to make new items. This one is a very heavy feature to delve into, but implementation is relatively simple:
 - ``"swallow_recipes"``: Recipes to use when swallowing an item, if your slugcat cannot swallow then they also cannot use this.
