@@ -1,0 +1,105 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net481</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>../mod/newest/plugins</OutputPath>
+    <PathMap>$(MSBuildProjectDirectory)=/$(SolutionName)</PathMap>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>portable</DebugType>
+	<RWInstallation>C:/Program Files (x86)/Steam/steamapps/common/Rain World</RWInstallation>
+	<ModPath>C:/Program Files (x86)/Steam/steamapps/workshop/content/312520</ModPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<Reference Include="$(RWInstallation)/BepInEx/core/BepInEx.dll">
+		<Private>false</Private>
+	</Reference>
+	  
+	<Reference Include="$(RWInstallation)/BepInEx/core/MonoMod.dll">
+		<Private>false</Private>
+	</Reference>
+	  
+    <Reference Include="$(RWInstallation)/BepInEx/plugins/HOOKS-Assembly-CSharp.dll">
+		<Private>false</Private>
+    </Reference>
+	  
+	<Reference Include="$(RWInstallation)/BepInEx/utils/PUBLIC-Assembly-CSharp.dll">
+		<Private>false</Private>
+	</Reference>
+	  
+	<Reference Include="$(RWInstallation)/RainWorld_Data/Managed/Mono.Cecil.dll">
+		<Private>false</Private>
+	</Reference>
+	  
+	<Reference Include="$(RWInstallation)/RainWorld_Data/Managed/Mono.Cecil.Rocks.dll">
+		<Private>false</Private>
+	</Reference>
+	  
+	<Reference Include="$(RWInstallation)/RainWorld_Data/Managed/MonoMod.RuntimeDetour.dll">
+		<Private>false</Private>
+	</Reference>
+	  
+	<Reference Include="$(RWInstallation)/RainWorld_Data/Managed/MonoMod.Utils.dll">
+		<Private>false</Private>
+	</Reference>
+
+	<Reference Include="$(RWInstallation)/RainWorld_Data/Managed/UnityEngine.dll">
+		<Private>false</Private>
+	</Reference>
+	  
+	<Reference Include="$(RWInstallation)/RainWorld_Data/Managed/UnityEngine.CoreModule.dll">
+		<Private>false</Private>
+	</Reference>
+	  
+	<Reference Include="$(RWInstallation)/RainWorld_Data/Managed/UnityEngine.InputLegacyModule.dll">
+		<Private>false</Private>
+	</Reference>
+	  
+	<Reference Include="$(RWInstallation)/RainWorld_Data/Managed/Unity.Mathematics.dll">
+		<Private>false</Private>
+	</Reference>
+	  
+	<Reference Include="C:\Users\linda\Documents\Rain Mods\- Magica Hooking Library\mod\newest\plugins\MagicaHookingLibrary.dll">
+		<Private>false</Private>
+	</Reference>
+
+	  <Reference Include="C:\Users\linda\Documents\Rain Mods\Extended-Menuscenes\mod\newest\plugins\ExtendedMenuscenes.dll">
+		  <Private>false</Private>
+	  </Reference>
+	  
+	<Reference Include="$(ModPath)/2933196558\newest\plugins/SlugBase.dll">
+		<Private>false</Private>
+	</Reference>
+  </ItemGroup>
+    
+	<Target Name="DebugMod" AfterTargets="PostBuildEvent" Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	
+		<!-- "C:\Program Files (x86)\Steam\steamapps\common\Rain World\RainWorld.exe" -->
+	</Target>
+
+  <Target Name="GenerateMod" AfterTargets="PostBuildEvent" Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <ItemGroup>
+      <RemovePlugins Include="../mod/newest/plugins/*.pdb" />
+    </ItemGroup>
+        
+    <Delete Files="@(RemovePlugins)" />
+	<Exec Command="C:\Program Files (x86)\Steam\steamapps\common\Rain World\RainWorld.exe" />
+  </Target>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="&quot;C:\Users\linda\Documents\Rain Mods\- Magica Hooking Library\build_event.sh&quot;" />
+  </Target>
+
+</Project>

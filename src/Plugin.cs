@@ -1,104 +1,100 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
-using ExtendedSlugbaseFeatures.Helpers;
-using ExtendedSlugbaseFeatures.Hooks;
-using ExtendedSlugbaseFeatures.Resources;
+using ExtendedSlugbase.Helpers;
+using MagicaHookingLibrary;
+using MagicaHookingLibrary.Helpers;
 using MonoMod.RuntimeDetour;
 using SlugBase;
 using SlugBase.Features;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using UnityEngine;
+using System.Security.Permissions;
+using static ExtendedSlugbase.Helpers.FeatureHelpers;
+using System;
+using ExtendedSlugbase.Features;
+using SlugBase.DataTypes;
+using static ExtendedSlugbase.Objects.SlugbaseObjects;
+using ExtendedSlugbase.Hooks.OnHooks;
 
-namespace ExtendedSlugbaseFeatures
+// Allows access to private members
+#pragma warning disable CS0618
+[assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
+#pragma warning restore CS0618
+
+namespace ExtendedSlugbase;
+
+[BepInDependency("magica.extendedmenuscenes", BepInDependency.DependencyFlags.SoftDependency)]
+[BepInDependency("magica.hookinglibrary", BepInDependency.DependencyFlags.HardDependency)]
+[BepInDependency("slime-cubed.slugbase", BepInDependency.DependencyFlags.HardDependency)]
+[BepInPlugin(_MOD_ID, "Extended Slugbase Features", "2.0.0")]
+
+public class Plugin : PluginTemplate
 {
-	[BepInPlugin(MOD_ID, "Extended Slugbase Features", "1.1.0")]
-	internal class Plugin : BaseUnityPlugin
+	public static new ManualLogSource Logger;
+
+	public const string _MOD_ID = "magica.extendedslugbasefeatures";
+
+	public static SlugcatStats.Name Prototype = new("magica.Prototype");
+
+	public static bool ExtendedMenuScenes { get; internal set; }
+
+	//LATER: Add translation support for slugbase
+	public Plugin() : base()
 	{
-		internal const string MOD_ID = "magica.extendedslugbasefeatures";
-		internal static string MOD_PATH = "";
-		internal static new ManualLogSource Logger;
+		Logger = base.Logger;
 
-		// Add hooks
-		internal void OnEnable()
+		_ = new PlayerFeaturesExt();
+		_ = new GameFeaturesExt();
+		_ = new TimelineFeatures();
+
+		// Slugbase hook to trace where Features are initalized from
+		try
 		{
-			Logger = base.Logger;
-			_ = new Hook(typeof(FeatureManager).GetMethod(nameof(FeatureManager.Register), BindingFlags.Public | BindingFlags.Static), FeatureManagerRegisterHook);
-
-			// Ensure the features load
-			_ = new RoomSpecificScriptHelpers.CustomCutscene.CutsceneID("null", false);
-			_ = RoomSpecificScriptHelpers.CustomCutscene.Registry;
-
-			On.RainWorld.OnModsInit += Extras.WrapInit((rainWorld) =>
+			// Load all features and check if they have a RequiredDLC attribute
+			foreach((string feature, RequiresDLC dlc) in from ass in ReflectionHelpers.GetScanAssemblies()
+			from type in ass.GetTypes() 
+			from field in type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) where typeof(Feature).IsAssignableFrom(field.FieldType) && field.GetCustomAttribute(typeof(ObsoleteAttribute)) == null // Ignore obsolete features
+			let attr = field.GetCustomAttribute(typeof(RequiresDLC)) let feature = field.GetValue(null) where feature != null && attr != null 
+			select ((feature as Feature).ID, attr as RequiresDLC))
 			{
-				ModOptions.RegisterOI();
-
-				MOD_PATH = ModManager.ActiveMods.FirstOrDefault(mod => mod.id == MOD_ID).path;
-			});
-
-			On.RainWorld.PostModsInit += Extras.WrapPostInit((rainWorld) =>
-			{
-				_ = new ExtFeatures();
-				Resources.Resources.Enums.Register();
-				RoomSpecificScriptHelpers.ScanFiles();
-
-				UnityEngine.Debug.Log($"File exists : {File.Exists(Path.Combine(MOD_PATH, "atlases", "modicon-slugbase.png"))}");
-				Futile.atlasManager.LoadAtlas(Path.Combine(MOD_PATH, "atlases", "extuisprites"));
-
-				// Apply our hooks as late as possible to avoid conflictions with other mods which IL hook onto the same methods
-				PlayerHooks.Apply();
-				Hooks.WorldHooks.Apply();
-				ResourceHooks.Apply();
-
-				// Possible hook to add refreshability to the remix menu? would this break things??? idk
-				//_ = new Hook(typeof(JsonRegistry<SlugcatStats.Name, SlugBaseCharacter>).GetMethod(nameof(JsonRegistry<SlugcatStats.Name, SlugBaseCharacter>.ReloadChangedFiles), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance), (Action<JsonRegistry<SlugcatStats.Name, SlugBaseCharacter>> orig, JsonRegistry<SlugcatStats.Name, SlugBaseCharacter> self) =>
-				//{
-				//	orig(self);
-				//	ModOptions.RegisterOI();
-				//});
-			});
-		}
-
-		private void FeatureManagerRegisterHook(Action<Feature> orig, Feature feature)
-		{
-			orig(feature);
-
-			string originMod = "SlugBase";
-
-			var trace = new StackTrace(true);
-			bool firstSlugbaseTrace = false;
-			for (int i = 0; i < trace.FrameCount; i++)
-			{
-				var method = trace.GetFrame(i).GetMethod();
-				var asm = method?.ReflectedType?.Assembly;
-				if (!firstSlugbaseTrace && asm.GetName().Name != "SlugBase")
+				if (SlugbaseHelpers.RegisteredFeatures.TryGetValue(feature, out var info))
 				{
-					continue;
+					info.dlc = dlc;
+					SlugbaseHelpers.RegisteredFeatures[feature] = info;
 				}
-				if (AbstractPhysicalObjectHelpers.dllBlacklist.Contains(asm.GetName().Name)) break;
-				if (asm.GetName().Name == "SlugBase")
+				else
 				{
-					firstSlugbaseTrace = true;
-					continue;
-				}
-				;
-				if (asm != typeof(RainWorld).Assembly && asm != typeof(Feature).Assembly)
-				{
-					originMod = asm.GetName().Name;
-					break;
+					SlugbaseHelpers.RegisteredFeatures.Add(feature, new() { dlc = dlc });        
 				}
 			}
-
-			ModOptions._allFeatures.Add(new(feature, originMod));
+			
+			_ = new Hook(typeof(ColorSlot).GetConstructor([typeof(int), typeof(JsonAny)]), SlugbaseHooks.ColorSlot_ctor);
+			_ = new Hook(SlugbaseHelpers.FeatureManager.GetMethod(nameof(SlugbaseHelpers.Register), BindingFlags.Public | BindingFlags.Static), SlugbaseHooks.FeatureManagerRegisterHook);
+			_ = new Hook(typeof(SlugBaseCharacter.FeatureList).GetMethod(nameof(SlugBaseCharacter.FeatureList.Set), BindingFlags.Public | BindingFlags.Instance), SlugbaseHooks.FeatureListSet);
+			_ = new Hook(SlugbaseHelpers.AddMany, SlugbaseHooks.FeatureListAddMany);
 		}
-
-		public void Update()
+		catch (Exception ex)
 		{
-			RoomSpecificScriptHelpers.CustomCutscene.Registry.ReloadChangedFiles();
+			Logger?.LogError(ex);
 		}
 	}
+
+    public override void PreModsInit(RainWorld self)
+    {
+        HookHelpers.ApplyHooks(HookHelpers.HookType.Pre, Logger);
+    }
+
+    public override void OnModsInit(RainWorld self)
+    {
+		ExtendedMenuScenes = MiscHelpers.IsModActive("magica.extendedmenuscenes");
+
+		ModOptions.RegisterOI();
+        HookHelpers.ApplyHooks(HookHelpers.HookType.On, Logger);
+    }
+
+    public override void PostModsInit(RainWorld self)
+    {
+        HookHelpers.ApplyHooks(HookHelpers.HookType.Post, Logger);
+		AtlasManager.LoadSlugbaseImages();
+    }
 }
