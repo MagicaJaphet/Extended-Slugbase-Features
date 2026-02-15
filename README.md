@@ -1,3 +1,12 @@
+# Assets
+## Modified Assets
+### Custom Scenes
+- Compatibiliity with [Extended MenuScenes](https://steamcommunity.com/sharedfiles/filedetails/?id=3666470764) has been added.
+    - Images now support ``"image_color"`` and ``"color_opacity"`` fields.
+        - ``"image_color"``: When set to an ``int`` or ``string``, will attempt to attach itself to a valid ``"custom_color"`` slot for the current slugcat, allowing dynamic color updating. When set to a ``color``, will apply a static color.
+        - ``"color_opacity"``: A ``float<0-1>`` value that affects the amount of the ``"image_color"`` that is applied to the image. 
+        - The color is applied using a multiply onto the image. Supports depth shaders as well thanks to custom shaders by Haizlbliek.
+
 # Features
 These are JSON key value pairs that goes into the ``features: {}`` of your slugcat's main JSON file. Examples will be provided of the correct format, for additional help it's reccommended to write in a program or site that checks JSON formatting.
 
