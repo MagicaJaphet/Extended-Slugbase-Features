@@ -1,353 +1,610 @@
-# Extended Slugbase Features
-![til](./extended-slugbase.gif)
+# Assets
+## Modified Assets
+### Custom Scenes
+- Compatibiliity with [Extended MenuScenes](https://steamcommunity.com/sharedfiles/filedetails/?id=3666470764) has been added.
+    - Images now support ``"image_color"`` and ``"color_opacity"`` fields.
+        - ``"image_color"``: When set to an ``int`` or ``string``, will attempt to attach itself to a valid ``"custom_color"`` slot for the current slugcat, allowing dynamic color updating. When set to a ``color``, will apply a static color.
+        - ``"color_opacity"``: A ``float<0-1>`` value that affects the amount of the ``"image_color"`` that is applied to the image. 
+        - The color is applied using a multiply onto the image. Supports depth shaders as well thanks to custom shaders by Haizlbliek.
 
-A framework aiming to extend the basic features of Slugbase to include quality of life functions for modders. This documentation assumes you know the basics of [Slugbase](https://slimecubed.github.io/slugbase/articles/gettingstarted.html?target="_blank"). Otherwise, do  check out their documentation first.
+# Features
+These are JSON key value pairs that goes into the ``features: {}`` of your slugcat's main JSON file. Examples will be provided of the correct format, for additional help it's reccommended to write in a program or site that checks JSON formatting.
 
-### The general idea list can be found in [IDEASGUY.md](./IDEASGUY.md), feel free to make suggestions on Raincord by pinging me (<@192423177320792065>).
+Features with ``<optional>`` keys have their default values in their examples. Some values may have a minimum or maximum value. If so, they are appropriately marked by ``<min-max>``.
 
-# Basic Features
-These are features that would be added in the `"features": {}` object of your Slugbase character's JSON.
-
-# Default Object Properties
-This section is used to define specifics used in object properties to parse information. Each parameter will specify which DLC may be required, and what type of variable the parameter is passed as.
-
-Object spawning is dynamic by nature, and supports any valid Abstract class. The basic structure of a JSON object for spawning a new object looks like this:
+## New JSON Types
+- ``<abstract object>``: A JSON object which contains a string and object dictionary to parse into a type that inherits ``AbstractPhysicalObject``. Will call the class's constructor when attempting to spawn the object. Works very similarly to Dev Console's ``raw_spawn`` command, with allowing additional fields and properties to be set if they are accessible. In simplier terms, accepts a new class instance to create a customizable object or creature.
 ```JSON
-"AbstractPhysicalObject": { "type": "Rock" }
-```
-This by default will spawn a Rock object, but other objects may be more complicated to create an instance of. Object spawning in general follows [DevConsole](https://github.com/SlimeCubed/DevConsole/wiki/Built-In-Commands#spawn-type-id-arg1-arg2-)'s method of spawning, where the spawn command passes parameters to the type of object you want to create an instance of.
-
-In simpler terms, you need to initiate a JSON object with a valid class which uses AbstractPhysicalObject as it's base. For the most part, you could pass a valid type into the ``"type": "object"`` field, but for the sake of ease this document will try to list the most likely use cases for the current features.
-
-## Common ``AbstractPhysicalObject`` Classes
-### Vanilla
-These do not require any additional DLC to use.
-- ``AbstractPhysicalObject`` - The base class that all valid Abstract types use.
-    - **\[REQUIRED\]** ``"type": "<type>"``\
-    Some subclasses require this field, the ``AbstractObjectType`` this object will be when it's spawned. See [Slugbase's section](https://github.com/SlimeCubed/SlugBaseRemix/blob/master/Docs/articles/features.md#abstractphysicalobjecttype) on valid types.
-- ``AbstractConsumable`` - A common class that is used for foods.
-    - **\[REQUIRED\]** ``"type": "<type>"``\
-    Check out the ``IsTypeConsumable()`` method in this class to see the common types used here.
-- ``AbstractDataPearl`` - The ``DataPearl`` or pearl class.
-    - **\[REQUIRED\]** ``"type": "<type>"``\
-    This parameter should be passed as ``DataPearl``, unless in the case of a unique pearl class that inherits ``DataPearl``.
-    - **\[REQUIRED\]** ``"dataPearlType": "<type>"``\
-     The ``DataPearlType`` of ``DataPearl`` that determines it's color and contents.
-        - Vanilla pearls : ``CC``, ``DS``, ``GW``, ``HI``, ``LF_bottom``, ``LF_west``, ``Misc``, ``Misc2``, ``PebblesPearl``, ``Red_stomach``, ``SB_filtration``, ``SB_ravine``, ``SH``, ``SI_top``, ``SI_west``, ``SL_bridge``, ``SL_chimney``, ``SL_moon``, ``SU``, ``UW``
-        - Downpour pearls: ``BroadcastMisc``, ``CL``, ``DM``, ``LC``, ``LC_second``, ``MS``, ``OE``, ``Rivulet_stomach``, ``RM``, ``SI_chat3``, ``SI_chat4``, ``SI_chat5``, ``Spearmasterpearl``, ``SU_filt``, ``VS``
-        - Should by default support CRS custom pearls, use the same ID that you'd use to spawn the pearl in Dev Tools.
-- ``AbstractCreature`` - The ``Creature`` class.
-    - **\[REQUIRED\]** ``"creatureTemplate": "<type>"``\
-    Instead of type, this class requires a valid ``CreatureTemplate.Type``. See [Slugbase's section](https://github.com/SlimeCubed/SlugBaseRemix/blob/master/Docs/articles/features.md#creaturetemplatetype) on valid types.
-- ``AbstractSpear`` - The ``Spear`` class.
-    - ``"explosive": false``\
-    Determines whether the spear is explosive.
-    - \[MSC\] ``"hue": 0``\
-    A ``0`` to ``1`` float value that spawns a ``Firebug`` spear. If ``explosive`` is true, gets overridden by this.
-    - \[MSC\] ``"electric": false``\
-    Determines if the spear is electric, overrides explosive.
-        - ``"electricCharge":  3``\
-        The amount of electric charges the spear has.
-    - \[MSC\] ``"needle": false``\
-    Determines if the spear is a Spearmaster spear.
-    - \[Watcher\] ``"poison:" 0``\
-    A ``0`` to ``1`` float value that coats the spear in ``Tardigrade`` poison.
-        - ``"poisonHue": 0``\
-        A ``0`` to ``1`` float value that controls the color of the poison.
-- ``EggBugEgg+AbstractBugEgg`` - The class used for Eggbug eggs.
-    - **\[REQUIRED\]** ``"hue":``\
-    Used to color the egg, a ``0`` to ``1`` float value. Ex: ``0.4``
-    - \[MSC\] Replace ``EggBugEgg+AbstractBugEgg`` with ``MoreSlugcats.FireEgg+AbstractBugEgg`` for ``FireBug`` eggs.
-- ``AbstractOverseerCarcass`` - The class used for Overseer eyes.
-    - **\[REQUIRED\]** ``"color":``\
-    A ``UnityEngine.Color`` value. Default is ``default``.
-    - **\[REQUIRED\]** ``"ownerIterator":``\
-    The number of iterator the Overseer belonged to, determining it's actual color.
-        - ``1``: Yellow
-        - ``2``: Green
-        - ``3``: Red
-        - ``4``: White
-        - ``5``: Purple
-- ``AbstractVultureMask`` - The class used for ``Vulture`` masks.
-    - **\[REQUIRED\]** ``"colorSeed": 1``\
-    An int value to determine the color of the mask.
-    - ``"king": false``\
-    Determines if the mask is a ``King Vulture``'s mask.
-    - \[MSC\] ``"scavKing": false``\
-    Determines if the mask is the ``King Scavenger``'s mask, overrides ``King Vulture``.
-    - \[MSC\] ``"spriteOverride": ""``\
-    Seemingly unused parameter for the ``King Scavenger`` mask variant.
-- ``AbstractBubbleGrass`` - The class used for ``Bubble Grass``.
-    - **\[REQUIRED\]** ``"oxygen": 0``\
-    A ``0`` to ``1`` value that determines how much oxygen is left in the plant. The default is ``1`` for full.
-
-
-## General Features
-### `"watcher_blue"`
-`float`\
-Ex: `"watcher_blue": 1`\
-By default, when setting a [custom_colors](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#custom_colors?target="_blank") slot to pure black ``#000000``, which is usually used for transparency, it will attempt to use the palette's black color instead. This setting when specified, will use Nightcat or Watcher's blueish black color to the specified amount.
-```csharp
-Color.Lerp(palette.blackColor, Custom.HSL2RGB(0.63055557f, 0.54f, 0.5f), Mathf.Lerp(0.08f, 0.04f, palette.darkness) * <watcher_blue>)
+"<AbstractPhysicalObject>": {
+    "<parameter name>": <value>,
+    "<field name>" : <value>,
+    "<property name>" : <value>
+}
 ```
 
-## Gameplay Features
+## ExtEnum / Enum Values
+For ``CreatureTemplate.Type`` or ``AbstractPhysicalObject.Type`` see [Slugbase's feature page](https://slimecubed.github.io/slugbase/articles/features.html). Because ``abstract object`` theoretically may require any ExtEnum or Enum type, only those that are specified in the features section will be listed here.
+### CreatureTemplate.Relationship.Type
+- Vanilla: ``DoesntTrack``, ``Ignores``, ``Eats``, ``Afraid``, ``StayOutOfWay``, ``AgressiveRival``, ``Attacks``, ``Uncomfortable``, ``Antagonizes``, ``PlaysWith``, ``SocialDependent``, ``Pack``
 
-### ``"take_spears_from_wall"``
-``boolean``\
-Ex: ``"take_spears_from_wall": true``\
-Allows the ability to take embedded spears out of walls.
+### Creature.DamageType
+- Vanilla: ``Blunt``, ``Stab``, ``Bite``, ``Water``, ``Explosion``, ``Electric``, ``None``
 
-## World Features
-### `"start_position"`
+### LimitResult
+- Extended Slugbase: ``LongStun``, ``Die``, ``ConsumeFood``
+
+### ObjectGrabability
+- Vanilla: ``CantGrab``, ``OneHand``, ``BigOneHand``, ``TwoHands``, ``Drag``
+
+### SoundID
+Way too many to list, new SoundIDs are also relatively easy to add. I would reccommend decompiling the code and looking at the list yourself.
+
+
+## Modified Features
+Some base features from Slugbase have slight alterations. Only the new information will be present, but a link to each feature's original documentation will be linked.
+
+### ["custom_colors"](https://slimecubed.github.io/slugbase/articles/features.html#custom_colors)
+- Color behavior have been modified.
+  - ``"story"`` and ``"arena"`` now accept ``int[2]`` values, in the case of these being present, the game will attempt to use the room palette's corrosponding color for that index. For example, ``[2, 0]`` corrosponds on the palette key to the palette's black color.
+    -  When not in game, the palette defaults to the outskirt's.
+    - An interesting side effect of this is indexes between ``x:[28-31]`` and ``y:[2-15]`` corrospond to effect color keys when in game due to the room camera writing the effect colors to the palette in-game. When outside of an active game, the color defaults to white. For reference for these, I would reccommend looking at the effect color png instead of the palette key.
+    - PS: Most rooms without plants or signs don't have an assigned effect color, which defaults to ``0`` or pink. If you want region consistency, you'll have to modify room settings yourself.
+- Watcher's black color effect now replaces the default black color behavior. Because pure black equates to transparency in-game, setting the color to pure black will now default the color to a palette's black color instead.
+- Watcher's blue color fade feature is directly integrated into the color slots.
+    - ``"story_fade"``: Accepts the same values as other slots, but now only appears when a room palette's darkness effect is above ``0``.
+    - ``"arena_fade"``: Accepts the same values, but in a list like ``"arena"``.
+    - ``"darkness_variance"``: A ``float[2]`` value that affects how the fade colors are used when room darkness is or is not present. The first value is at no darkness, the second is at max darkness.
+        - Ex: ``"darkness_variance": [0.08, 0.04]``
+
+## Features
+### "ignore_dlc_errors"
+``bool``\
+Ex: ``"ignore_dlc_errors": true``
+
+When true, will not throw a DLC JSON exception when the required DLC is not enabled. This does not circumvent DLC checks when performing a DLC check. Ensure that your mod's dependencies reflect the required DLCs you need for the feature list of your slugcat if this is false.
+
+## Game Features
+### "limited_cycles"
 ```JSON
 {
-    "<room_name>": [0, 0]
+	<optional>"cycles": int,
+    <optional>"death_menu_scene": "<MenuScene.SceneID>"
 }
 ```
 Ex:
 ```JSON
-"start_position":
-{
-    "SI_C04": [20, 5],
-    "SU_A07": [10, 10]
+"limited_cycles": {
+	"cycles": 20,
+    "death_menu_scene": "Slugcat_Dead_Red"
 }
 ```
-If the [start_room](https://slimecubed.github.io/slugbase/articles/features.html#start_room?target="_blank") array exists, attempts to set slugcat's position in room tiles based on the room's name. Room tiles can be measured with the Dev Tool [DebugMouse](https://rainworldmodding.miraheze.org/wiki/DebugMouse?target="_blank").
+Limits the slugcat's cycles to the set amount. When reaching the last cycle, forces harder gameplay and death beyond this point causes permadeath.
 
-### `"start_stomach_item"`
+<hr>
+
+### "creature_relationships"
 ```JSON
 {
-    "AbstractPhysicalObject": 
-        {
-            "type": "<AbstractPhysicalObject.Type>",
-            "<property>": null
-        }
+	"<CreatureTemplate.Type>": { "<CreatureTemplate.Relationship.Type>" : float<0-1>, }
 }
 ```
+Ex:
+```JSON
+"creature_relationships": {
+	"LanternMouse": { "Ignore" : 1, }
+}
+```
+Overrides static relationships of creatures with the players in the slugcat's game, creatures with reputations are mostly unaffected by these values. The float value represents the intensity of the relationship.
+
+<hr>
+
+### "overseer_overwrite"
+```JSON
+[
+	{
+		"owner": int,
+		"color": color,
+	}
+]
+```
+Ex:
+```JSON
+"overseer_overwrite": [
+	{
+		"owner": 1,
+		"color": "FF0000",
+	}
+]
+```
+Overrides any number with a new color when checking the ownerIterator value of an overseer. ["guide_overseer"](https://slimecubed.github.io/slugbase/articles/features.html#guide_overseer) can also be set to any number, and when used in conjunction allows unique overseers to co-exist with existing ones.
+
+<hr>
+
+### "get_karma_from_scavs" [MSC]
+``bool``\
+Ex: ``"get_karma_from_scavs": true``
+
+Allows the player to gain karma to pass through gates temporarily while holding Scavenger corpses.
+
+<hr>
+
+### "ghost_pings" [MSC]
+``bool``\
+Ex: ``"ghost_pings": true``
+
+When true, as long as a valid Echo exists within a region, flashes the Saint Echo ping effect at the start of every cycle or after crossing a gate.
+
+<hr>
+
+### "can_pass_OE_gate" [MSC]
+``bool[1..2]``\
+Ex: ``"can_pass_OE_gate": true``, ``"can_pass_OE_gate": [true, false]``
+
+Controls whether the slugcat can normally pass the OE gate unrestricted. The second bool determines whether the game should check if Gourmand has been beaten first.
+
+<hr>
+
+### "max_slugpup_spawns" [MSC]
+``int``\
+Ex: ``"max_slugpup_spawns": 9999``
+
+When set, allows slugpups to spawn naturally in the slugcat's campaign. The number corresponds to how many slugpups are allowed to exist at the same time in the campaign.
+
+<hr>
+
+### "spawn_karma_flowers"
+``bool``\
+Ex: ``"spawn_karma_flowers": true``
+
+Overrides whether Karma Flowers can spawn in the slugcat's campaign.
+
+<hr>
+
+### "enlightened"
+``bool``\
+Ex: ``"enlightened": true``
+
+When set to true, allows the slugcat to see Void Spawn and speak to Echoes and Looks To The Moon by default without the mark.
+
+<hr>
+
+### "has_id_drone" [MSC]
+``bool``\
+Ex: ``"has_id_drone": true``
+
+When set to true, the slugcat will spawn with Artificer's ID drone.
+
+<hr>
+
+### "can_access_whitetokens" [MSC]
+``bool``\
+Ex: ``"can_access_whitetokens": true``
+
+When set to true, allows the slugcat to access white token objects in they exist in their timeline.
+
+<hr>
+
+### "reveal_mark_overtime"
+``int``\
+Ex: ``"reveal_mark_overtime": 5``
+
+When set, the alpha of the mark will fade in over the set amount of cycles. This also applies to the main menu art mark.
+
+<hr>
+
+### "start_position"
+``int[2][1..]``\
+Ex:``"start_position": [5, 10]``, ``"start_position": [[5, 10], [10, 5]]``
+
+IntVector2 values that corrospond to the tile position the slugcat should start in. The length of the array should match the length of "start_room". Tile positions can be viewed in-game with the [DebugMouse](https://rainworldmodding.miraheze.org/wiki/DebugMouse).
+
+<hr>
+
+### "start_stomach_item"
+``abstract object``\
 Ex:
 ```JSON
 "start_stomach_item": {
-    "AbstractDataPearl": 
-        {
-            "type": "DataPearl",
-            "dataPearlType": "CC"
-        }
+    "AbstractRifle": {
+        "ammoType": "Grenade",
+        "ammo" : {
+            "Grenade": 500,
+            "Rock": 0,
+            "Firecracker": 0,
+            "Light": 0,
+            "Bees": 0,
+            "Fruit": 0,
+            "FireEgg": 0,
+            "Pearl": 0,
+            "Ash": 0,
+            "Void": 0,
+            "Noodle": 0,
+            "Singularity": 0,
+		},
+    },
 }
 ```
-If set, spawns in the stomach of the Player on first realization. Allows to pass any valid object type, even spears. For a reference of types, check out [AbstractPhysicalObject.Type](github.com/SlimeCubed/SlugBaseRemix/blob/master/Docs/articles/features.md#abstractphysicalobjecttype?&target="_blank"). The object covers most ``AbstractPhysicalObject`` classes, but the most common ones and fields are listed [here]().
 
-### `"intro_cutscene"`
-```JSON 
-{	
-    "<room_name>": {
-		"player_grasps": {
-                "AbstractPhysicalObject": 
-                    {
-                        "type": "<AbstractPhysicalObject.Type>",
-                        "<property>": null
-                    }
-            },
-		"inputs": [ 
-            { "repeat": 0, 
-            "time": 0, 
-            "x": 0, 
-            "y": 0, 
-            "jmp": true, 
-            "pckp": true, 
-            "mp": true, 
-            "crouchToggle": true }
-		],
-        "food": 0
-	}		
+When set, the slugcat will have an item in their stomach on their starting cycle. Currently supports most types that inherit ``AbstractPhysicalObject``. The provided example is the correct format for a Joke Rifle as without setting the other ammo to ``0`` will cause the game to error trying to save (For now until I fix that).
+
+## Player Features
+
+### "grapple_tongue" [MSC]
+```JSON
+{
+    <optional>"retract_lengths": float[2],
+    <optional>"retractable": bool,
+    <optional>"length": float,
+    <optional>"segments": int,
+	<optional>"retract_speed": float,
 }
 ```
 Ex:
-```JSON 
-"intro_cutscene": {	
-    "SI_C04": {
-		"player_grasps": { 
-            "AbstractSpear": { "explosive": true },
-            "AbstractPhysicalObject": { "type": "Rock" } 
-        },
-		"inputs": [ 
-            { "time": 100, "x": 1, "y": 1, "crouch": true },
-            { "time": 20, "x": 1, "y": 1 }
-		],
-        "food": 5
-	}		
-}
+```JSON
+"grapple_tongue": {
+    "retract_lengths": [ 50, 170 ],
+    "retractable": true,
+    "length": 150,
+    "segments": 20,
+	"retract_speed": 1,
+},
 ```
-The intro cutscene  feature is nuanced, and may seem complicated at glance. To start with, we initialize the cutscene by specifying which room the information should be used in. If your Slugbase character has multiple starting rooms, it's good to make a separate script for each possibility.
 
-- `"<room_name>": { }` is used to specify the name of the room this script runs in, which should match the name of one of the rooms in your [start_room](https://slimecubed.github.io/slugbase/articles/features.html#start_room?target="_blank") array. It stores all of the information you'll need inside the brackets. Make sure to parse each room with a comma, if there are multiple.
-- `"food": 0` is used to set the amount of food the slugcat starts with. Quarter values are accepted.
-- `"player_grasps": {   }` is used for storing object information which will spawn objects in the Player's hand, if their grasps are free. This formula follows the same as [start_stomach_item](#start_stomach_item), with the additional bonus of the ability to spawn in 2 or more objects.
-- `"inputs": [   ]` is a list of inputs, translated from the Player.InputPackage class. They do not need a specific key bind set up to work, and rather work based off of the variables passed into it. Parse each input with `{    },`'s.
-    - `"repeat": int` is used to specify how many times this input should be repeated. Useful for multi-frame inputs like jump (Simply specifying true on the jump value will only make the Slugcat jump for one frame).
-    - `"time": int` is used to tell the script how long in frames the input should run (~40 frames a second by default).
-    - `"x": int` and `"y": int` both are simple integer values which represent the direction being held.
-        - `0` represents no direction.
-        - `1` represents up and right.
-        - `-1` represents down and left.
-    - `"jump": boolean` or `"jmp": boolean` is used for the jump input. Jump inputs on an automated controller do not carry over in long presses, and should be specified per frame to perform full jumps.
-    - `"grab": boolean` or `"pckp": boolean` is used for the grab/pickup input. The same goes here as it does for jump, long presses do not cause Slugcat to swallow/eat.
-    - `"map": boolean` or `"mp": boolean` is used for the map input.
-    - `"crouch": boolean` or `"crouchToggle": boolean` is used by controllers to signify when the Slugcat should crouch or stand.
+When present, allows the slugcat to use Saint's tongue ability. There are a lot of customizable factors:
+- ``"retractable"``: Determines if the length of the tongue can be changed by pressing up or down.
+- ``"retract_lengths"``: Controls how long the tongue can be.
+- ``"retract_speed"``: Controls how fast the tongue length can be changed.
+- ``"length"``: Controls the "ideal" length of the tongue, can be thought of as the default length.
+- ``"segments"``: Controls how detailed the rendering of the tongue is, as it functions as a TriangleMesh. Lower segment counts make the tongue visually appear more sharp around edges.
 
-There is currently no tool to translate these inputs into this specified format, but some other mods like Preservatory include built in debug tools for recording inputs. Inputs can be updated in live game time, and replayed by restarting the cycle (Fastest way is pressing R in Dev Tools).
+<hr>
 
-### `"grab_overrides"`
+### "grab_overrides"
 ```JSON
 {
-	"<AbstractPhysicalObject.Type>": "<Player.ObjectGrabability>"
-},
+    "<AbstractPhysicalObject.Type>": "<ObjectGrabability>",
+    "<CreatureTemplate.Type>": "<ObjectGrabability>",
+}
 ```
 Ex:
 ```JSON
 "grab_overrides": {
-	"Rock": "Drag",
-	"JetFish": "OneHand",
+    "JellyFish": "Drag",
+    "YellowLizard": "OneHand",
+    "Spear": "OneHand",
+}
+```
+Overrides how the slugcat can grasp object or creature types. To simulate dual wielding spears, set ``Spear`` to ``OneHand``. This does not affect how heavy the object is, as it's relative to the slugcat's mass.
+
+<hr>
+
+### "bite_lethality_mutliplier"
+``float[1..2]``\
+Ex: ``"bite_lethality_mutliplier": 0``, ``"bite_lethality_mutliplier": [0, 5]``
+
+Affects the chance of a creature bite killing the player instantly. The first number is added to the difficulty, which is divided by either ``5`` or the second number in the array. ``0`` represents no lethality, while ``1`` represents guarenteed lethality.
+
+<hr>
+
+### "object_interactions"
+```JSON
+{
+    <optional>"pop_bubble_fruit": bool,
+    <optional>"bubble_weed_usage_multiplier": float<0-1>,
+    <optional>"poison_immune": bool,
+    <optional>"explosive_immune": bool,
+    <optional>"mushroom_interactions": {
+        <optional>"timer": int,
+        <optional>"frames_per_second": int
+    }
+}
+```
+Ex:
+```JSON
+"object_interactions": {
+    "bubble_weed_usage_multiplier": 1,
+    "explosive_immune": false,
+    "mushroom_interactions": {
+        "timer": 320,
+        "frames_per_second": 15,
+    },
+    "poison_immune": false
+    "pop_bubble_fruit": false,
+}
+```
+
+Various object specific interactions that can be modified.
+- ``"pop_bubble_fruit"``: When true, pops bubble fruit like Rivulet when holding them.
+- ``"bubble_weed_usage_multiplier"``: A float value to multiply how fast the slugcat consumes Bubble Weed.
+- ``"poison_immune"``: Affects whether being injected and eating poisonous things actually poison the slugcat.
+- ``"explosive_immune"``: Affects whether indirect explosions kill slugcat from impact like Artificer.
+- ``"mushroom_interactions"``:
+    - ``"timer"``: How long (relative to the frames per second) the mushroom effect should last.
+    - ``"frames_per_second"``: How fast the game should run under the effects of a mushroom. ``40`` is the default FPS the game runs in. This number also affects the timer, as the timer will tick down every frame.
+
+<hr>
+
+### "body_warmth" [MSC (or) Watcher]
+``float<0-1>``\
+Ex: ``"body_warmth": 0.4``
+
+Affects how warm by default the slugcat is when exposed to a blizzard like Artificer.
+
+<hr>
+
+### "only_tosses_spears"
+``bool``\
+Ex: ``"only_tosses_spears": true``
+
+When true, attempting to throw spear causes the slugcat to toss them instead like Saint.
+
+<hr>
+
+### "no_stun_grasp_penalty"
+```JSON
+{
+    "<Creature.DamageType>": bool,
+}
+```
+Ex:
+```JSON
+"no_stun_grasp_penalty": {
+    "Explosion": true,
+    "None": true,
+    "Blunt": true,
+}
+```
+Overrides damage types causing slugcat to drop their grasps when stunned. For example, being explosive immune and having no ``Explosion`` damage penalty makes the slugcat not drop their items when taking explosion damage.
+
+<hr>
+
+### "take_spears_from_wall"
+``bool``\
+Ex: ``"take_spears_from_wall": true``
+
+When true, allows slugcat to take spears from walls like Artificer or the remix setting.
+
+<hr>
+
+### "explosive_jump" [MSC]
+```JSON
+{
+    <optional>"limits": int[1..2],
+    <optional>"jump_sound_id": "<SoundID>",
+    <optional>"parry": bool,
+    <optional>"jump_speed": float[1..2],
+    <optional>"food_cost": int,
+    <optional>"limit_reached_result": "<LimitReached>",
+    <optional>"stun_timers": int[1..2],
+}
+```
+Ex:
+```JSON
+"explosive_jump": {
+    "limits": [7, 10],
+    "jump_sound_id": "Fire_Spear_Explode",
+    "parry": true,
+    "food_cost": 0,
+    "jump_speed": [8],
+    "limit_reached_result": "Die",
+    "stun_timers": [60],
+}
+```
+Allows the slugcat to double jump, with some customiziability:
+- ``"limits"``: The soft and hard limits of the jump ability. When Artificer reaches the soft limit, they will be stunned until reaching their hard limit where they explode.
+- ``"jump_sound_id"``: The sound to play when double jumping.
+- ``"parry"``: Whether holding down when performing the double jump should perform an Artificer parry.
+- ``"jump_speed"``: The effectiveness of the double jump, values lower than ``6`` usually do not affect velocity.
+- ``"limit_reached_result"``: The action to perform when reaching the hard jump limit.
+- ``"food_cost"``: If the hard limit action is ``ConsumeFood``, will attempt to consume food. If the slugcat has inefficient food, instead the limit will set the slugcat to a starving state until food is completely replinished.
+- ``"stun_timers"``: How long each stun should last when reaching the soft limit, the second value is used if the hard limit is ``LongStun``. If the stun is set to 0, there is no stun penalty.
+
+<hr>
+
+### "gills" [MSC]
+```JSON
+{
+    <optional>"rows": int,
+    <optional>"bounciness": float<0-1>,
+    <optional>"drag": float,
+    <optional>"length": float,
+    <optional>"width": float,
+    <optional>"spread": float<0-1>,
+}
+```
+Ex:
+```JSON
+"gills": {
+    "rows": 3,
+    "bounciness": 1,
+    "drag": 1,
+    "spread": 0.65,
+}
+```
+When present, gives the slugcat Salamander gills like Rivulet, with some customiziability:
+- ``"rows"``: The amount gill rows the slugcat has.
+- ``"bounciness"``: How bouncy the gills are when they move.
+- ``"drag"``: The air friction to be applied to the gills.
+- ``"length"``: How long the gills are.
+- ``"width"``: How tall the gills are.
+- ``"spread"``: The distance between each gill.
+
+<hr>
+
+### "spear_specks" [MSC]
+```JSON
+{
+    "speckle_amounts": int[2],
+    "feeds_from_spears": bool,
+    "pull_sound_id": "<SoundID>",
+    "snap_sound_id": "<SoundID>",
+    "generation_speed": float<0-1>,
+    "food_cost": int,
+    "head_shaking": bool,
+    "dripping": bool,
+    "spear_template": {
+        <abstract object>
+    }
+}
+```
+Ex:
+```JSON
+"spear_specks": {
+    "speckle_amounts": [5, 3],
+    "feeds_from_spears": true,
+    "pull_sound_id": "SM_Spear_Pull",
+    "snap_sound_id": "SM_Spear_Grab",
+    "generation_speed": 0.05,
+    "food_cost": 0,
+    "head_shaking": true,
+    "dripping": true,
+}
+```
+When present, allows the slugcat to craft items from specks on their tail like Spearmaster. Has some customizability:
+- ``"speckle_amounts"``: The amount of rows and columns of specks on the tail. Values ``2`` or lower may have unexpected visual results.
+- ``"feeds_from_spears"``: Whether the slugcat should feed from their tail objects. Currently only supports spears of any variety.
+- ``"pull_sound_id"``: The sound to play on loop when pulling the item out.
+- ``"snap_sound_id"``: The sound to play when grabbing the item.
+- ``"generation_speed"``: The speed of item generation.
+- ``"food_cost"``: The food cost of creating an item.
+- ``"head_shaking"``: Determines if the slugcat should visibly react to item generation like Spearmaster does.
+- ``"dripping"``: Determines if there should be a visual dripping effect when generating items. Will likely be replaced in the future.
+- ``"spear_template"``: The item template that determines the item that will be pulled out of the tail.
+
+<hr>
+
+### "crafting" [MSC]
+```JSON
+"crafting": {
+    <optional>"swallow_recipes": {
+        "<AbstractPhysicalObject.Type>": { "cost": int, "result": { <abstract object> } },
+        "<CreatureTemplate.Type>": { "cost": int, "result": { <abstract object> } }
+    },
+    <optional>"one_handed_recipes": {
+        "<AbstractPhysicalObject.Type>": { "cost": int, "result": { <abstract object> } },
+        "<CreatureTemplate.Type>": { "cost": int, "result": { <abstract object> } }
+    },
+    <optional>"two_handed_recipes": {
+        "<AbstractPhysicalObject.Type>": {
+            "<AbstractPhysicalObject.Type>": { <abstract object> },
+            "<CreatureTemplate.Type>": { <abstract object> },
+        },
+        "<CreatureTemplate.Type>": {
+            "<AbstractPhysicalObject.Type>": { <abstract object> },
+            "<CreatureTemplate.Type>": { <abstract object> },
+        }
+    },
+    <optional>"regurgitate_list": {
+        "cost": int,
+        "item_pool": [ { "object": { <abstract object> }, "rarity": float<0-1> } ]
+    },
 },
 ```
-Allows for custom grabability requirement overrides, enabling the ability to make normally one/two handed items have a different grabbing functionality. It does not affect the weight of the object, but does affect how the slugcat holds it.
-#### Valid `Player.ObjectGrabability` types
-- ``BigOneHand`` - Used by weapons.
-- ``CantGrab`` - Makes slugcat unable to grab item, default case.
-- ``Drag`` - Makes slugcat drag an item with two hands.
-- ``OneHand`` - One handed item, default for non weapon items.
-- ``TwoHands`` - Makes slugcat hold an item with two hands, functionally similar to ``Drag``.
+Ex:
 
-### `"bite_lethality_mutliplier"`
-`float[]`\
-Ex: `"bite_lethality_mutliplier": 0.7, 5`\
-Overrides the default ``Player.DeathByBiteMultiplier`` value, which determines how lethal a lizard bite is times this multiplier. The first value controls the default multiplier of ``0.7``, the second controls how the ``StoryGameSession.difficulty`` is divided with a default of `5`.
-```csharp
-return multipliers[0] + (self.room.game.GetStorySession.difficulty / (multipliers.Length == 1 ? 5f : multipliers[1]));
+```JSON
+"crafting": {
+    "swallow_recipes": {
+        "Rock": {
+            "cost": 1,
+            "result": {
+                "AbstractPhysicalObject": {
+                    "type": "ScavengerBomb",
+                }
+            }
+        }
+    },
+    "one_handed_recipes": {
+        "Spear": {
+            "cost": 1,
+            "result": {
+                "AbstractSpear": {
+                    "explosive": true,
+                }
+            }
+        }
+    },
+    "two_handed_recipes": {
+        "ScavengerBomb": {
+            "ScavengerBomb": {
+                "AbstractPhysicalObject": {
+                    "type": "SingularityBomb"
+                }
+            },
+        }
+    },
+    "regurgitate_list": {
+        "cost": 0,
+        "item_pool": [
+            { 
+                "object": { 
+                    "AbstractPhysicalObject": {
+                        "type": "ScavengerBomb",
+                    }
+                },
+                "rarity": 1,
+            }
+        ]
+    },
+},
 ```
-If the game is not in a Story session:
-```csharp
-return multipliers[0] + 0.05f;
-```
+When present and valid recipes are given, allows the slugcat to craft, reguritate, or swallow items to make new items. This one is a very heavy feature to delve into, but implementation is relatively simple:
+- ``"swallow_recipes"``: Recipes to use when swallowing an item, if your slugcat cannot swallow then they also cannot use this.
+    - ``"<Type>"``: The item or creature type to convert.
+        - ``"cost"``: The food cost required to make any of the items.
+        - ``"result"``: The item to produce from the object or creature type.
 
-### `"spawn_karma_flowers"`
-`boolean`\
-Ex: `"spawn_karma_flowers": true`\
-If specified, allows control over if Karma Flowers spawn in the Slugbase character's campaign.
+<hr>
 
-### `"enlightened"`
-`boolean`\
-Ex: `"enlightened": true`\
-If true, allows the Slugbase character to be able to speak to Iterators and Echoes without the mark, and see Voidspawn without the glow.
+- ``"one_handed_recipes"``: Recipes to use when holding a single valid item.
+    - ``"<Type>"``: The item or creature type to convert.
+        - ``"cost"``: The food cost required to make any of the items.
+        - ``"result"``: The item to produce from the object or creature type.
 
-### `"reveal_mark_overtime"`
-`int`\
-Ex: `"reveal_mark_overtime": 14`\
-If a valid int is passed along with [the_mark](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#the_mark?target="_blank") being true, uses Hunter's gradual mark reveal mechanic where the Mark doesn't visually appear for several cycles to keep it's existence hidden. The number represents the amount of cycles before the mark is at full opacity.
+<hr>
 
+- ``"two_handed_recipes"``: Recipes to use when holding two valid crafting items. Only one side of the table needs to be defined, the other possible combination will be automatically filled. Ex: ``ScavengerBomb + DataPearl = KarmaFlower`` will automatically be filled in as ``DataPearl + ScavengerBomb = KarmaFlower`` aswell.
+    - ``"<Type>"``: The first type to consider. Also useful to use the primary for table organization if this type is used in multiple recipes.
+        - ``"<Type>"``: The second type to consider.
+            - ``"<abstract object>"``: The object to produce as a result.
 
-# MSC Features
-These are features that would be added in the `features` list of your Slugbase character's JSON. They can only be used if the user has MSC enabled due to their DLC limitations. If you use any of these, make sure to include MSC as a mod dependency.
+<hr>
 
-## World Features
-### `"can_pass_OE_gate"`
-`boolean[]`\
-Ex: `"can_pass_OE_gate": [true, true]`\
-When true, allows the Story slugcat to pass through the OE gate. If no second value is provided, or the second value is `true`, checks if Gourmand has been properly beaten before unlocking.
+- ``"regurgitate_list"``: An item pool to pull if the slugcat can swallow and regurgitate items.
+    - ``"cost"``: The cost to regurgitate a new item.
+    - ``"item_pool"``: A list of objects to pull from.
+        - ``"object"``: The resulting object.
+        - ``"rarity"``: The rarity value of the object. The closer to 0, the more rare the item will be. If there are multiple valid items, the pool will roll another random value to pull the final item.
 
-## Cosmetic Features
-These features are for looks only, they do not impact gameplay.
-### `"gill_rows"`
-`int`\
-Ex: `"gill_rows": 3"`\
-Gives the Player cosmetic Rivulet gills, automatically detecting if [custom_colors](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#custom_colors?target="_blank") contains colors for `"Gills"`. The total number of gills will be `gill_rows * 2`.
+<hr>
 
-### `"saint_fluff"`
-`boolean`\
-Ex: `"saint_fluff": true`\
-Gives the Player Saint's fluffy head sprite.
+### "saint_eyes" [MSC]
+``bool``\
+Ex: ``"saint_eyes": true``
 
-### `"arti_eyes"`
-`boolean`\
-Ex: `"arti_eyes": true`\
-Gives the Player Artificer's closed eye face sprite, does not include the scar sprite. Cannot be flipped.
+When true, the slugcat's eyes will always be closed unless dead.
 
-### `"saint_eyes"`
-`boolean`\
-Ex: `"saint_eyes": true`\
-Gives the Player Saint's face sprite, overwrites [arti_eyes](#arti_eyes) if true, unless open.
+<hr>
 
-## Cosmetic / Gameplay Features
-These features contain gameplay changes, and cosmetic changes.
-### `"spear_specks"`
-`int[]`\
-Ex: `"can_spawnspears": [5, 3]`\
-Gives the Player Spearmaster tail specks with the specified number of rows and lines, along with the ability to spawn needle spears. Automatically detects if [custom_colors](https://slimecubed.github.io/slugbase/articles/features.html?tabs=slugcatname#custom_colors?target="_blank") contains colors for `"Spears"`. Input for spawning spears changes slightly if the Player can still eat without spears or swallow, requiring the Player to hold up and grab instead. The Player is not required to eat from the spears by default.
+### "can_slam" [MSC]
+``bool``\
+Ex: ``"can_slam": true``
 
-## Gameplay Features
-These features contain gameplay changes, including general world properties.
+When true, allows the slugcat to use Gourmand's slamming ability.
 
-### `"max_slugpup_spawns"`
-`integer`\
-Ex: `"max_slugpup_spawns": 5`\
-The maximum number of Slugpups which can spawn at any given time in the Slugbase character's campaign.
+<hr>
 
-### `"can_access_whitetokens"`
-`boolean`\
-Ex: `"can_access_whitetokens": true`\
-Allows the Slugbase character to access Broadcasts in their campaign, if they exist in their worldstate.
+### "cant_swallow_objects"
+``bool``\
+Ex: ``"cant_swallow_objects": false``
 
-### `"can_dualwield"`
-`boolean`\
-Ex: `"can_dualwield": true`\
-If true, allows the Player to hold two Spears at once.
+When true, disallows the slugcat from swallowing or regurgitating objects.
 
-### `"feeds_from_spears"`
-`boolean`\
-Ex: `"feeds_from_spears": true`\
-If true along with [can_spawnspears](#can_spawnspears), only allows the Player to feed from freshly made Spears. Diet is adjustable, allowing feeding from plants if specified.
-- Each stab counts towards one pip times the food multiplier for that creature/food.
-- Corpses can be eaten from if their `meatpoints` are above `0`, if the Corpse multiplier is above `0`.
-- Gooieducks are multi-spearable, Popcorn plants and Pomegranates act normally.
-- Currently Slimemold is still inedible due to the inability to spear them, along with other typically non-spearable objects.
+## Timeline Features
+When implementing a custom timeline, there are some features of other timelines that one may also want in their own, but are otherwise hardcoded. These features aim to help un-hardcode those. They can only be used when a slugbase timeline is used.
 
-### `"cant_swallow_objects"`
-`boolean`\
-Ex: `"cant_swallow_objects": true`\
-If true, disallows the Player from swallowing/spitting up objects from their stomach.
+### "show_rain_timer"
+``bool``\
+Ex: ``"show_rain_timer": false``
 
-
-### `"can_slam"`
-`boolean`\
-Ex: `"can_slam": true`\
-If true, allows the Player to slam creatures from a high height, inflicting damage like Gourmand.
-
-### `"explosive_jump"`
-`int[]`\
-Ex: `"explosive_jump": [5, 10]`\
-If true, allows the Player to use Artificer's explosive jump, including the down parry ability. The numbers represent the amount of times this ability can be used before approaching Artificer's burnout, and the max amount of times before they die. If no second value is specified, the feature will attempt to use the first number and divide it for the explosion thresholds, with the value being the max.
-
-### `"craft_explosives_cost"`
-`int`\
-Ex: `"craft_explosives_cost": 1`\
-Allows the Player to craft explosives from Spears and swallow objects to convert them like Artificer, with the equivalent food cost number.
-
-### `"get_karma_from_scavs"`
-`boolean`\
-Ex: `"get_karma_from_scavs": true`\
-Allows the Player to gain temporary Karma from holding Scavenger corpses.
-
-### `"pop_held_bubblefruit"`
-`boolean`\
-Ex: `"pop_held_bubblefruit": true`\
-Allows the Player to pop held Bubble Fruit like Rivulet.
-
-### `"only_tosses_spears"`
-`boolean`\
-Ex: `"only_tosses_spears": true`\
-Overrides the Player's ability to throw spears with Saint's spear toss.
-
-### `"take_spears_from_wall"`
-`boolean`\
-Ex: `"take_spears_from_wall": true`\
-Allows Player to take embedded spears from walls like Artificer.
+Overrides the rain timer dots being drawn, like in Saint's timeline. Also, inheritting Saint's timeline will also implement this by default now.
