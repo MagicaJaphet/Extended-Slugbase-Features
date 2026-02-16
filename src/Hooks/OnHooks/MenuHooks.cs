@@ -39,7 +39,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 
             if (slugcatNumber.TryGetFeature(GameFeaturesExt.cycleLimit, out var cycleLimit))
             {
-                string text = text = Region.GetRegionFullName(self.saveGameData.shelterName.Substring(0, self.saveGameData.shelterName.IndexOf("_")), slugcatNumber);
+                string text = Region.GetRegionFullName(self.saveGameData.shelterName.Substring(0, self.saveGameData.shelterName.IndexOf("_")), slugcatNumber);
                 if (text.Length > 0)
                 {
                     text = menu.Translate(text);
@@ -131,6 +131,15 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 								color = extImage.ImageColor;
 							}
 							ExternalWrappers.ExtendedMenuscenes.TryApplyColoredMenuIllustration(self, image, color, extImage.Opacity, index, Custom.rainWorld.progression.miscProgressionData.currentlySelectedSinglePlayerSlugcat);
+						}
+						else if (!string.IsNullOrEmpty(extImage.BackupImage))
+						{
+							int index = self.depthIllustrations.IndexOf(self.depthIllustrations.Find(x => x.fileName.Contains(image.Name)));
+							self.depthIllustrations[index] = new(self.menu, self, customScene.SceneFolder, extImage.BackupImage, image.Position, image.Depth, image.Shader);
+							for (int i = 0; i < self.depthIllustrations.Count; i++)
+							{
+								self.depthIllustrations[i].sprite.MoveToFront();
+							}
 						}
 					}
 				}

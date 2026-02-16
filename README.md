@@ -1,11 +1,64 @@
+# Contributing
+Want to contribute to the project? Check out the planned unimplemented features, create a pull request, or create an issue to suggest an idea.
+
+## Planned Features
+- Integration with Custom Slugcat Utils features, as the mod is no longer being actively maintained.
+    - Feature List:
+        - [Customizable edible objects/creatures](https://github.com/pkuyo/Custom-Slugcat-Utils/blob/master/doc/doc.md#customizable-edible-objectscreatures)
+        - [Limited Cycles (forced time limit / locked ascension screen)](https://github.com/pkuyo/Custom-Slugcat-Utils/blob/master/doc/doc.md#game-ending-related)
+        - [Customized overseer behavior](https://github.com/pkuyo/Custom-Slugcat-Utils/blob/master/doc/doc.md#customizable-guide-overseers-and-behaviors)
+        - Iterator behavior scripts (Will be integrated with the custom room scripts most likely).
+
+<hr>
+
+- Features likely to be added in the next major update:
+    - Food that stuns or kills if it gives negative pips
+    - Slugpup toggle
+    - Saint ascension (customizable)
+    - Modify movement stats (allow Rivulet movement, or Gourmand infinite rolling)
+    - Watcher invisibility
+    - Expedition perks / burdens in story mode
+        - Slow time
+        - Hunted
+        - Pursued
+    - Expedition menu scene art
+    - Toggle passage progression and passage button 
+    - Default hidden or unplayable slugcat toggle (hides campaign from select screen)
+    - DMS support for assets with sprites
+    - Spear survivability chances (like Gourmand)
+    - Embedded pearl / object (Can be interacted with in scripts)
+    - Progression locked slugcat (like Hunter / MSC)
+    - Lock abilities behind a check
+        - Ability to add tutorial text when first encountering the ability to use them
+    - Water immunities / weaknesses (lava / acid immunity, Artificer exploding in water)
+    - Mauling side effects (shock / poison / etc)
+    - Watcher cosmetic toggles
+    - Inability to starve
+
+<hr>
+
+- Major features that are currently targetting an unknown release date:
+    - Ability to live edit features in the mod's remix menu, with automatic JSON formatting.
+        - API support to add your own features to it without being a part of this mod.
+    - Custom room specific scripts
+        - Intro cutscene / etc
+        - Iterator interactions
+        - Fade to ending / slideshow
+
+<hr>
+
+- Features that are just ideas for now:
+    - Configure # of player grasps (and add sprites)
+
 # Assets
 ## Modified Assets
 ### Custom Scenes
 - Compatibiliity with [Extended MenuScenes](https://steamcommunity.com/sharedfiles/filedetails/?id=3666470764) has been added.
-    - Images now support ``"image_color"`` and ``"color_opacity"`` fields.
+    - Images now support ``"image_color"``, ``"color_opacity"``, and ``"backup_image"`` fields.
         - ``"image_color"``: When set to an ``int`` or ``string``, will attempt to attach itself to a valid ``"custom_color"`` slot for the current slugcat, allowing dynamic color updating. When set to a ``color``, will apply a static color.
         - ``"color_opacity"``: A ``float<0-1>`` value that affects the amount of the ``"image_color"`` that is applied to the image. 
         - The color is applied using a multiply onto the image. Supports depth shaders as well thanks to custom shaders by Haizlbliek.
+        - ``"backup_image"``: Used in case you don't have the mod as a dependency and still want a colored image attached.
 
 # Features
 These are JSON key value pairs that goes into the ``features: {}`` of your slugcat's main JSON file. Examples will be provided of the correct format, for additional help it's reccommended to write in a program or site that checks JSON formatting.
@@ -47,7 +100,7 @@ Some base features from Slugbase have slight alterations. Only the new informati
 - Color behavior have been modified.
   - ``"story"`` and ``"arena"`` now accept ``int[2]`` values, in the case of these being present, the game will attempt to use the room palette's corrosponding color for that index. For example, ``[2, 0]`` corrosponds on the palette key to the palette's black color.
     -  When not in game, the palette defaults to the outskirt's.
-    - An interesting side effect of this is indexes between ``x:[28-31]`` and ``y:[2-15]`` corrospond to effect color keys when in game due to the room camera writing the effect colors to the palette in-game. When outside of an active game, the color defaults to white. For reference for these, I would reccommend looking at the effect color png instead of the palette key.
+    - An interesting side effect of this is indexes between ``x:[30-31]`` and ``y:[2-5]`` corrospond to effect color keys when in game due to the room camera writing the effect colors to the palette in-game. When outside of an active game, the color defaults to white. For reference for these, I would reccommend looking at the effect color png instead of the palette key.
     - PS: Most rooms without plants or signs don't have an assigned effect color, which defaults to ``0`` or pink. If you want region consistency, you'll have to modify room settings yourself.
 - Watcher's black color effect now replaces the default black color behavior. Because pure black equates to transparency in-game, setting the color to pure black will now default the color to a palette's black color instead.
 - Watcher's blue color fade feature is directly integrated into the color slots.
@@ -308,7 +361,7 @@ Ex:
         "timer": 320,
         "frames_per_second": 15
     },
-    "poison_immune": false
+    "poison_immune": false,
     "pop_bubble_fruit": false
 }
 ```
@@ -375,7 +428,8 @@ When true, allows slugcat to take spears from walls like Artificer or the remix 
     <optional>"jump_speed": float[1..2],
     <optional>"food_cost": int,
     <optional>"limit_reached_result": "<LimitReached>",
-    <optional>"stun_timers": int[1..2]
+    <optional>"stun_timers": int[1..2],
+    <optional>"jump_effect": bool,
 }
 ```
 Ex:
@@ -387,7 +441,8 @@ Ex:
     "food_cost": 0,
     "jump_speed": [8],
     "limit_reached_result": "Die",
-    "stun_timers": [60]
+    "stun_timers": [60],
+    "jump_effect": true,
 }
 ```
 Allows the slugcat to double jump, with some customiziability:
@@ -398,6 +453,7 @@ Allows the slugcat to double jump, with some customiziability:
 - ``"limit_reached_result"``: The action to perform when reaching the hard jump limit.
 - ``"food_cost"``: If the hard limit action is ``ConsumeFood``, will attempt to consume food. If the slugcat has inefficient food, instead the limit will set the slugcat to a starving state until food is completely replinished.
 - ``"stun_timers"``: How long each stun should last when reaching the soft limit, the second value is used if the hard limit is ``LongStun``. If the stun is set to 0, there is no stun penalty.
+- ``"jump_effect"``: Currently just a bool that determines if no Artificer jump effects should be used, will eventually be replaced with a custom effect object.
 
 <hr>
 

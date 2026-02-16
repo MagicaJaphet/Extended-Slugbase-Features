@@ -5,12 +5,13 @@
 	"features": {
 		"select_menu_scene": "Slugcat_Prototype",
 		
-		"color": "0000FF",
+		"color": "000000",
 		"custom_colors": [
-		  { "name": "Body", "story": "F00000" },
-		  { "name": "Eyes", "story": "FFFFFF" },
-		  { "name": "Gills", "story": "FFFFFF" },
-		  { "name": "Spears", "story": "FFFFFF" }
+		  { "name": "Body", "story": "000000", "story_fade": "FFFFFF", "darkness_variance": [0, 1] },
+		  { "name": "Eyes", "story": "FFFFFF", "story_fade": [30, 4], "darkness_variance": [0.2, 0.8] },
+		  { "name": "Gills", "story": "FFFFFF", "story_fade": [30, 4], "darkness_variance": [0.2, 0.8] },
+		  { "name": "Spears", "story": "FFFFFF", "story_fade": [30, 4], "darkness_variance": [0.2, 0.8] },
+		  { "name": "Tongue", "story": "FFFFFF", "story_fade": [30, 4], "darkness_variance": [0.2, 0.8] }
 		],
 		"diet": {
 		  "base": "Red",
@@ -21,45 +22,159 @@
 			"DangleFruit": 0.5
 		  }
 		},
-		
-		"pop_held_bubblefruit": true,
-		"can_pass_OE_gate": [true, false],
-		"max_cycle_limit": [20, 5],
-		"has_tongue": true,
-		
+		"the_mark": true,
+		"the_glow": true,
 		"guide_overseer": 69,
-		"grab_overrides": {
-			"Rock": "Drag",
-			"JellyFish": "Drag",
-			"YellowLizard": "OneHand"
-		},
-		"bite_lethality_mutliplier": 0.9,
-		"only_tosses_spears": false,
-		"spear_specks": [4, 10],
-		"arti_eyes": true,
-		"saint_fluff": true,
-		"explosive_jump": [20, 25],
-		"take_spears_from_wall": true,
-		"craft_explosives_cost": 4,
-		"get_karma_from_scavs": true,
-		"can_dualwield": true,
-		"saint_eyes": true,
+		"start_room": "SH_A21",
+		"throw_skill": [2, 1],
 		"world_state": "Red",
-		"can_slam": true,
-		"cant_swallow_objects": false,
-		"feeds_from_spears": true,
+		
+		"ignore_dlc_errors": false,
+		"limited_cycles": {
+			"cycles": 5,
+			"death_menu_scene": "Slugcat_Dead_Red"
+		},
+		"creature_relationships": {
+			"LanternMouse": { "Ignore" : 1 }
+		},
+		"overseer_overwrite": [
+			{
+				"owner": 69,
+				"color": "000000"
+			}
+		],
+		"get_karma_from_scavs": true,
+		"can_pass_OE_gate": [true, false],
 		"max_slugpup_spawns": 9999,
 		"spawn_karma_flowers": false,
 		"enlightened": true,
+		"has_id_drone": true,
 		"can_access_whitetokens": true,
-		
-		"the_mark": true,
-		"reveal_mark_overtime": 14,
-		
-		"start_room": "SI_C04",
-		"start_position": {
-			"SI_C04": [18, 5]
+		"reveal_mark_overtime": 3,
+		"start_position": [11, 20],
+		"start_stomach_item": {
+			"AbstractRifle": {
+				"ammoType": "Grenade",
+				"ammo" : {
+					"Grenade": 500,
+					"Rock": 0,
+					"Firecracker": 0,
+					"Light": 0,
+					"Bees": 0,
+					"Fruit": 0,
+					"FireEgg": 0,
+					"Pearl": 0,
+					"Ash": 0,
+					"Void": 0,
+					"Noodle": 0,
+					"Singularity": 0
+				},
+			},
 		},
-		"start_stomach_item": { "EggBugEgg+AbstractBugEgg": { "hue": 0.2 } },
+		"grapple_tongue": {
+			"retract_lengths": [ 20, 140 ],
+			"retractable": true,
+			"length": 120,
+			"segments": 4,
+			"retract_speed": 2
+		},
+		"grab_overrides": {
+			"JellyFish": "Drag",
+			"YellowLizard": "OneHand",
+			"Spear": "OneHand"
+		},
+		"bite_lethality_mutliplier": [0, 5],
+		"object_interactions": {
+			"bubble_weed_usage_multiplier": 1,
+			"explosive_immune": true,
+			"mushroom_interactions": {
+				"timer": 400,
+				"frames_per_second": 60
+			},
+			"poison_immune": true,
+			"pop_bubble_fruit": true
+		},
+		"body_warmth": 0.4,
+		"only_tosses_spears": true,
+		"no_stun_grasp_penalty": {
+			"Explosion": true,
+			"None": true,
+			"Blunt": true
+		},
+		"take_spears_from_wall": true,
+		"explosive_jump": {
+			"limits": [7, 10],
+			"jump_sound_id": "Fire_Spear_Explode",
+			"parry": true,
+			"food_cost": 0,
+			"jump_speed": [9],
+			"limit_reached_result": "ConsumeFood",
+			"stun_timers": [0]
+		},
+		"gills": {
+			"rows": 4,
+			"bounciness": 1,
+			"length": 35,
+			"width": 0.8,
+			"drag": 5,
+			"spread": 0.99
+		},
+		"spear_specks": {
+			"speckle_amounts": [10, 5],
+			"feeds_from_spears": true,
+			"pull_sound_id": "Fire_Spear_Explode",
+			"snap_sound_id": "Fire_Spear_Explode",
+			"generation_speed": 0.2,
+			"food_cost": 0,
+			"head_shaking": false,
+			"dripping": false
+		},
+		"crafting": {
+			"swallow_recipes": {
+				"Rock": {
+					"cost": 1,
+					"result": {
+						"AbstractPhysicalObject": {
+							"type": "ScavengerBomb"
+						}
+					}
+				}
+			},
+			"one_handed_recipes": {
+				"Spear": {
+					"cost": 1,
+					"result": {
+						"AbstractSpear": {
+							"explosive": true
+						}
+					}
+				}
+			},
+			"two_handed_recipes": {
+				"ScavengerBomb": {
+					"ScavengerBomb": {
+						"AbstractPhysicalObject": {
+							"type": "SingularityBomb"
+						}
+					},
+				}
+			},
+			"regurgitate_list": {
+				"cost": 0,
+				"item_pool": [
+					{ 
+						"object": { 
+							"AbstractPhysicalObject": {
+								"type": "ScavengerBomb"
+							}
+						},
+						"rarity": 1,
+					}
+				]
+			}
+		},
+		"saint_eyes": true,
+		"can_slam": true,
+		"cant_swallow_objects": false,
 	}
 }

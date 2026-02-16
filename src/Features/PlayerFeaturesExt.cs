@@ -24,7 +24,6 @@ public class PlayerFeaturesExt
 
 	//FEATURE: Default hidden or unplayable toggle
 	//FEATURE: DMS support for assets with sprites
-	//FEATURE: Spear immunity chances
 	//FEATURE: Embedded pearl
 	//FEATURE: Jolly icon / pup variant
 	//FEATURE: Cycle limit death main menu art / results screen

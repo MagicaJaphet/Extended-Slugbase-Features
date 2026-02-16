@@ -668,9 +668,9 @@ namespace ExtendedSlugbase.Objects
             public int FoodCost { get; } = 0;
             public float[] JumpBoost { get; } = [8f];
             public int[] StunTimers { get; } = [60];
+			public bool JumpEffect { get; }
 
-
-            public enum LimitResult
+			public enum LimitResult
             {
                 LongStun,
                 Die, // Like artificer
@@ -718,6 +718,11 @@ namespace ExtendedSlugbase.Objects
                     {
                         Parry = parry;
                     }
+					if (obj.TryGet("jump_effect", out bool jumpEffect))
+					{
+						//LATER: Replace
+						JumpEffect = jumpEffect;
+					}
                 }
             }
         }

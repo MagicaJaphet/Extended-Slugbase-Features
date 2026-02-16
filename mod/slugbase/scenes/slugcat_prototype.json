@@ -1,16 +1,24 @@
 {
 	"id": "Slugcat_Prototype",
-	"scene_folder": "scenes/slugcat - prototype",
+	"scene_folder": "slugbase/scenes/slugcat_prototype",
 	"images": [
-		{ "name": "Background", "pos": [492, 297], "depth": 3.7, "shader": "Basic" },
-		{ "name": "Slugcat",    "pos": [605, 427], "depth": 2.8, "shader": "Basic" },
-		{ "name": "Grass 3",    "pos": [602, 264], "depth": 2.2, "shader": "Basic" },
-		{ "name": "Grass 2",    "pos": [446, 283], "depth": 2.0, "shader": "Basic" },
-		{ "name": "Grass 1",    "pos": [515, 265], "depth": 1.8, "shader": "Basic" }
+		{ "name": "0 - prototype slugcat - flat", "pos": [0, 0], "depth": -1, "flatmode": true },
+		
+		{ "name": "1 - background", "pos": [500, 320], "depth": 6, "shader": "Basic" },
+		{ "name": "2a - tail", "pos": [450, 250], "depth": 5.5, "shader": "Normal", "image_color": "Body", "backup_image": "2a - tail backup" },
+		{ "name": "2b - tailspecks", "pos": [450, 250], "depth": 5.46, "shader": "Normal", "image_color": "Spears" },
+		{ "name": "3 - body", "pos": [450, 250], "depth": 3, "shader": "Normal", "image_color": "Body", "backup_image": "3 - body backup"  },
+		{ "name": "4 - tunnel", "pos": [450, 250], "depth": 4, "shader": "Normal" },
+		{ "name": "5a - head", "pos": [450, 250], "depth": 2.8, "shader": "Normal", "image_color": "Body", "backup_image": "5a - head backup"  },
+		{ "name": "5b - headlight", "pos": [450, 250], "depth": 2.75, "shader": "Lighten", "image_color": "Body", "color_opacity": 0.4, "backup_image": "5b - headlight backup" },
+		{ "name": "6a - gills", "pos": [450, 250], "depth": 2.8, "shader": "Normal", "image_color": "Gills" },
+		{ "name": "6b - gillslight", "pos": [450, 250], "depth": 2.75, "shader": "Lighten", "image_color": "Gills", "color_opacity": 0.3 },
+		{ "name": "7a - eyes", "pos": [450, 250], "depth": 2.7, "shader": "Normal", "image_color": "Eyes" },
+		{ "name": "7b - eyeslight", "pos": [450, 250], "depth": 2.67, "shader": "Lighten", "image_color": "Eyes", "color_opacity": 0.4 },
 	],
-	"idle_depths": [ 2.8 ],
+	"idle_depths": [ 2.8, 3 ],
 	"glow_pos": [688, 484],
 	"mark_pos": [689, 583],
 	"select_menu_pos": [0, 0],
-	"slugcat_depth": 2.8
+	"slugcat_depth": 3
 }

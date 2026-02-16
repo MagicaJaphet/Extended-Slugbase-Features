@@ -264,11 +264,11 @@ public static class FeatureHelpers
                 RequiresDLC dlc = info.dlc;
                 bool needsMSC = dlc.needsMSC && !ModManager.MSC;
                 bool needsWatcher = dlc.needsWatcher && !ModManager.Watcher;
-				if (!dlc.mutualExclusion && needsMSC && needsWatcher)
+				if (dlc.mutualExclusion && needsMSC && needsWatcher)
                 {
                     return false;
                 }
-                if (dlc.mutualExclusion && (needsMSC || needsWatcher))
+                if (!dlc.mutualExclusion && (needsMSC || needsWatcher))
                 {
                     return false;
                 }

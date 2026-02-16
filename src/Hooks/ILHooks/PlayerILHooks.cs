@@ -610,7 +610,7 @@ namespace ExtendedSlugbase.Hooks.ILHooks
             {
                 if (doubleJump != null)
                 {
-                    return true; //LATER: Replace with bool when properly implemented
+                    return doubleJump.JumpEffect; //LATER: Replace with bool when properly implemented
                 }
                 return false;
             }

@@ -34,6 +34,7 @@ namespace ExtendedSlugbase.Objects
 				public string SlotName { get; }
 				public int? SlotIndex { get; }
 				public float Opacity { get; } = 1f;
+				public string BackupImage { get; }
 
 				public ExtImage(JsonObject json)
 				{
@@ -55,6 +56,10 @@ namespace ExtendedSlugbase.Objects
 					if (json.TryGet("color_opacity", out float opacity))
 					{
 						Opacity = opacity;
+					}
+					if (json.TryGet("backup_image", out string backUp))
+					{
+						BackupImage = backUp;
 					}
 				}
 			}
