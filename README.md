@@ -12,6 +12,7 @@ Want to contribute to the project? Check out the planned unimplemented features,
 <hr>
 
 - Features likely to be added in the next major update:
+  	- The-M4rblelous-Entity-Pack field setting support
     - Food that stuns or kills if it gives negative pips
     - Slugpup toggle
     - Saint ascension (customizable)
