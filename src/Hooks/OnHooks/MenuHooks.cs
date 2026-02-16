@@ -108,8 +108,9 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 				// Use the custom menuscene type if the mod is installed
 				foreach (var image in customScene.Images)
 				{
-					if (extCustomScene.ExtImages.TryGetValue(image, out var extImage))
+					if (extCustomScene.ExtImages.Count > customScene.Images.IndexOf(image))
 					{
+						var extImage = extCustomScene.ExtImages[customScene.Images.IndexOf(image)];
 						if (Plugin.ExtendedMenuScenes && (extImage.SlotIndex != null || extImage.SlotName != null || extImage.ImageColor != null))
 						{
 							bool hasSlots = Custom.rainWorld.progression.miscProgressionData.currentlySelectedSinglePlayerSlugcat.TryGetFeature(PlayerFeatures.CustomColors, out var slots);

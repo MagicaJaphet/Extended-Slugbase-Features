@@ -1,0 +1,11 @@
+{
+  "WorkshopID": 3469789934,
+  "LatestGameVersion": "v1.11.6",
+  "UpdateTitle": false,
+  "UpdateDescription": false,
+  "MarkAsPublic": true,
+  "Tags": [
+    "Dependency",
+    "Tools"
+  ]
+}

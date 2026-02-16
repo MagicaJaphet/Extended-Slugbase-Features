@@ -4,6 +4,14 @@
   "version": "2.0.0",
   "authors": "MagicaJaphet",
   "description": "A dependency to extend various features not found in Slugbase to Slugbase characters.",
-  "requirements": [ "magica.hookinglibrary" ],
-  "requirements_names": [ "Hooking Library" ]
+  "requirements": [
+    "magica.hookinglibrary"
+  ],
+  "requirements_names": [
+    "Hooking Library"
+  ],
+  "tags": [
+    "Dependency",
+    "Tools"
+  ]
 }

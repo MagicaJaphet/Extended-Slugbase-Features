@@ -16,7 +16,7 @@ namespace ExtendedSlugbase.Objects
 		{
 			public static Dictionary<CustomScene, ExtCustomScene> ExtCustomScenes { get; } = [];
 
-			public Dictionary<Image, ExtImage> ExtImages = [];
+			public List<ExtImage> ExtImages = [];
 
 			public ExtCustomScene(CustomScene scene, JsonObject json)
 			{
@@ -24,7 +24,7 @@ namespace ExtendedSlugbase.Objects
 				foreach (var image in from i in images select i.AsObject())
 				{
 					Image imgObj = scene.Images.FirstOrDefault(x => x.Name == image.GetString("name"));
-					ExtImages.Add(imgObj, new(image));
+					ExtImages.Add(new(image));
 				}
 			}
 

@@ -29,7 +29,7 @@
 		"throw_skill": [2, 1],
 		"world_state": "Red",
 		
-		"ignore_dlc_errors": false,
+		"ignore_dlc_errors": true,
 		"limited_cycles": {
 			"cycles": 5,
 			"death_menu_scene": "Slugcat_Dead_Red"
