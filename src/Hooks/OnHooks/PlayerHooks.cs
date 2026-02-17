@@ -162,7 +162,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
                 self.tongue.rope.thickness = tongue.Thickness; // This value honestly doesn't seem to affect anything but still
             }
 
-            if (self.room != null && self.room.game.IsStorySession && self.room.game.GetStorySession?.saveState?.cycleNumber == 0 
+            if (!Custom.rainWorld.ExpeditionMode && self.room != null && self.room.game.IsStorySession && self.room.game.GetStorySession?.saveState?.cycleNumber == 0 
                 && self.room.game.TryGetFeature(GameFeaturesExt.spawnStomachObject, out var abstractObject) 
                 && abstractObject.TryGetObject(self.room.abstractRoom, new(), out var startObject))
             {
