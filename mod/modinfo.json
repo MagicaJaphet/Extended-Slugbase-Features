@@ -5,10 +5,12 @@
   "authors": "MagicaJaphet",
   "description": "A dependency to extend various features not found in Slugbase to Slugbase characters.",
   "requirements": [
-    "magica.hookinglibrary"
+    "magica.hookinglibrary",
+	"slime-cubed.slugbase"
   ],
   "requirements_names": [
-    "Hooking Library"
+    "Hooking Library",
+	"SlugBase"
   ],
   "tags": [
     "Dependency",

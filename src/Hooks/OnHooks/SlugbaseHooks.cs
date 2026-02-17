@@ -57,6 +57,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 
     			self.Variants = arenaColors;
     			extSlot.VariantPaletteIndexes = arenaPalettes;
+				Plugin.Logger.LogInfo(extSlot.VariantPaletteIndexes?.Length.ToString() ?? "null");
     		}
     	}
 

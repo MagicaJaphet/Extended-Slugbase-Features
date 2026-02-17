@@ -7,11 +7,11 @@
 		
 		"color": "000000",
 		"custom_colors": [
-		  { "name": "Body", "story": "000000", "story_fade": "FFFFFF", "darkness_variance": [0, 1] },
-		  { "name": "Eyes", "story": "FFFFFF", "story_fade": [30, 4], "darkness_variance": [0.2, 0.8] },
-		  { "name": "Gills", "story": "FFFFFF", "story_fade": [30, 4], "darkness_variance": [0.2, 0.8] },
-		  { "name": "Spears", "story": "FFFFFF", "story_fade": [30, 4], "darkness_variance": [0.2, 0.8] },
-		  { "name": "Tongue", "story": "FFFFFF", "story_fade": [30, 4], "darkness_variance": [0.2, 0.8] }
+		  { "name": "Body", "story": "000000", "story_fade": "FFFFFF", "arena": ["FF0000", "00FF00", "0000FF", "FFF000"], "arena_fade": ["FF00FF", "00FF00", "00FFF0", "020481"], "darkness_variance": [0, 1] },
+		  { "name": "Eyes", "story": "FFFFFF", "story_fade": [30, 4], "arena": [[2,1], [4,1], [6,1], [8,1]], "arena_fade": [[2,5], [4,5], [6,5], [8,5]],  "darkness_variance": [0.2, 0.8] },
+		  { "name": "Gills", "story": "FFFFFF", "story_fade": [30, 4], "arena": [[2,1], [4,1], [6,1], [8,1]], "arena_fade": [[2,5], [4,5], [6,5], [8,5]], "darkness_variance": [0.2, 0.8] },
+		  { "name": "Spears", "story": "FFFFFF", "story_fade": [30, 4], "arena": [[2,1], [4,1], [6,1], [8,1]], "arena_fade": [[2,5], [4,5], [6,5], [8,5]], "darkness_variance": [0.2, 0.8] },
+		  { "name": "Tongue", "story": "FFFFFF", "story_fade": [30, 4], "arena": [[2,1], [4,1], [6,1], [8,1]], "arena_fade": [[2,5], [4,5], [6,5], [8,5]],  "darkness_variance": [0.2, 0.8] }
 		],
 		"diet": {
 		  "base": "Red",
@@ -25,7 +25,7 @@
 		"the_mark": true,
 		"the_glow": true,
 		"guide_overseer": 69,
-		"start_room": "SH_A21",
+		"start_room": ["SH_A21", "SH_A21"],
 		"throw_skill": [2, 1],
 		"world_state": "Red",
 		
@@ -51,7 +51,7 @@
 		"has_id_drone": true,
 		"can_access_whitetokens": true,
 		"reveal_mark_overtime": 3,
-		"start_position": [11, 20],
+		"start_position": [[11, 20], [11, 20]],
 		"start_stomach_item": {
 			"AbstractRifle": {
 				"ammoType": "Grenade",

@@ -38,7 +38,7 @@ namespace ExtendedSlugbase.Objects
             public bool TryGetPalKey(out IntVector2 key, int? variant = null)
             {
                 key = default;
-                if (variant is int v && VariantPaletteIndexes.Length > v
+                if (variant is int v && VariantPaletteIndexes != null && VariantPaletteIndexes.Length > v
                     && VariantPaletteIndexes[v] is IntVector2 arenaCol)
                 {
                     key = arenaCol;
@@ -55,7 +55,7 @@ namespace ExtendedSlugbase.Objects
             public bool TryGetFadeColor(out Color color, int? variant = null)
             {
                 color = default;
-                if (variant is int v && VariantFades.Length > v 
+                if (variant is int v && VariantFades != null && VariantFades.Length > v 
                     && VariantFades[v] is Color arenaCol)
                 {
                     color = arenaCol;
@@ -72,7 +72,7 @@ namespace ExtendedSlugbase.Objects
             public bool TryGetFadePalKey(out IntVector2 key, int? variant = null)
             {
                 key = default;
-                if (variant is int v && VariantFadePaletteIndexes.Length > v
+                if (variant is int v && VariantFadePaletteIndexes != null && VariantFadePaletteIndexes.Length > v
                     && VariantFadePaletteIndexes[v] is IntVector2 arenaCol)
                 {
                     key = arenaCol;
