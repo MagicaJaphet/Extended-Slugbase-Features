@@ -25,7 +25,7 @@
 		"the_mark": true,
 		"the_glow": true,
 		"guide_overseer": 69,
-		"start_room": ["SH_A21", "SH_A21"],
+		"start_room": "SH_A21",
 		"throw_skill": [2, 1],
 		"world_state": "Red",
 		
@@ -51,7 +51,7 @@
 		"has_id_drone": true,
 		"can_access_whitetokens": true,
 		"reveal_mark_overtime": 3,
-		"start_position": [[11, 20], [11, 20]],
+		"start_position": [11, 20],
 		"start_stomach_item": {
 			"AbstractRifle": {
 				"ammoType": "Grenade",

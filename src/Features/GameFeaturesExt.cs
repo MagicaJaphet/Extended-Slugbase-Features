@@ -105,13 +105,17 @@ public  class GameFeaturesExt
 
 		if (json.TryParse(out JsonList list))
 		{
-			if (list.ParseListItems<JsonList>(throwIfParseError: false) is JsonList[] rooms)
+			var rooms = list.ParseListItems<JsonAny>(throwIfParseError: false);
+			if (rooms.Length > 0)
 			{
-				startingPositions = [.. from room in rooms select new IntVector2(room.GetInt(0), room.GetInt(1))];
-			}
-			else
-			{
-				startingPositions = [new IntVector2(list.GetInt(0), list.GetInt(1))];
+				if (rooms[0].Type == JsonAny.Element.List)
+				{
+					startingPositions = [.. from room in rooms let roomList = room.AsList() select new IntVector2(roomList.GetInt(0), roomList.GetInt(1))];
+				}
+				else
+				{
+					startingPositions = [new IntVector2(list.GetInt(0), list.GetInt(1))];
+				}
 			}
 		}
 
