@@ -136,10 +136,11 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 						else if (!string.IsNullOrEmpty(extImage.BackupImage))
 						{
 							int index = self.depthIllustrations.IndexOf(self.depthIllustrations.Find(x => x.fileName.Contains(image.Name)));
-							self.depthIllustrations[index] = new(self.menu, self, customScene.SceneFolder, extImage.BackupImage, image.Position, image.Depth, image.Shader);
-							for (int i = 0; i < self.depthIllustrations.Count; i++)
+							self.depthIllustrations[index].fileName = extImage.BackupImage;
+							self.depthIllustrations[index].LoadFile(customScene.SceneFolder);
+							if (Futile.atlasManager.DoesContainElementWithName(extImage.BackupImage))
 							{
-								self.depthIllustrations[i].sprite.MoveToFront();
+								self.depthIllustrations[index].sprite.SetElementByName(extImage.BackupImage);
 							}
 						}
 					}

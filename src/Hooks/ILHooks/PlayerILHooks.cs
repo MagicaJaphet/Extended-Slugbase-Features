@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using static ExtendedSlugbase.Objects.PlayerObjects;
 using System.Security.Cryptography.X509Certificates;
 using SlugBase.DataTypes;
+using SlugBase;
 
 namespace ExtendedSlugbase.Hooks.ILHooks
 {
@@ -329,7 +330,7 @@ namespace ExtendedSlugbase.Hooks.ILHooks
 
             static bool GenerateSpearInput(int inputY, Nullable<bool> cantSwallow, Player self)
             {
-                int y = (cantSwallow ?? false) ? 0 : 1;
+				int y = (cantSwallow ?? false) || !SlugBaseCharacter.TryGet(self.SlugCatClass, out _) ? 0 : 1;
                 return !(self.input[0].y == y); // Because it's a brtrue, we have to reverse the logic
             }
 
