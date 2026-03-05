@@ -90,7 +90,12 @@ public static class AbstractHelpers
 		typeof(AbstractRoom),
 		typeof(World),
 		typeof(WorldCoordinate),
-		typeof(EntityID)
+		typeof(EntityID),
+		typeof(PlacedObject.ConsumableObjectData)
+	];
+
+	internal static readonly Type[] typesOkToBeNullAssignableFrom = [
+		typeof(PhysicalObject),
 	];
 
     internal static bool scanned;
@@ -210,7 +215,7 @@ public static class AbstractHelpers
 				argKeys.Remove(key);
 			}
 
-			if (finalArgs[outArgInd] == null && !typesOkToBeNull.Any(x => x == param.ParameterType) && !typeof(PhysicalObject).IsAssignableFrom(param.ParameterType))
+			if (finalArgs[outArgInd] == null && !typesOkToBeNull.Any(x => x == param.ParameterType) && !typesOkToBeNullAssignableFrom.Any(x => x.IsAssignableFrom(param.ParameterType)))
 			{
 				invalidParams.Add(param);
 			}
@@ -265,7 +270,7 @@ public static class AbstractHelpers
 			var param = parameters[outArgInd];
 			if (finalArgs[outArgInd] != null && !typesOkToBeNull.Contains(param.ParameterType)) continue;
 
-			if (!TryFillAutoParam(param, room, pos, abstractObject.AltID ?? id, out finalArgs[outArgInd]) && !typeof(PhysicalObject).IsAssignableFrom(param.ParameterType))
+			if (!TryFillAutoParam(param, room, pos, abstractObject.AltID ?? id, out finalArgs[outArgInd]) && !typesOkToBeNullAssignableFrom.Any(x => x.IsAssignableFrom(param.ParameterType)))
 			{
 				Plugin.Logger.LogInfo($"{param.ParameterType.Name} was not able to be auto filled!");
 			}
