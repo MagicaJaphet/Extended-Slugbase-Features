@@ -15,11 +15,7 @@ namespace ExtendedSlugbase.Helpers
 
             public static bool TryGetData(T obj, out C value)
             {
-                if (weakData.TryGetValue(obj, out value))
-                {
-                    return true;
-                }
-                return false;
+                return weakData.TryGetValue(obj, out value);
             }
         }
     }

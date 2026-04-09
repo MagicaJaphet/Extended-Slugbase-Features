@@ -7,6 +7,7 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MoreSlugcats;
 using RWCustom;
+using SlugBase;
 using SlugBase.Features;
 using System;
 using System.Collections.Generic;
@@ -63,13 +64,14 @@ internal class WeaponILHooks : IOwnHooks
 
 		static bool CanEatEggBugs(bool canFeedFromSpears, PlayerObjects.SpearCreatability specks, Spear self)
 		{
-			return specks != null
+			return canFeedFromSpears || // Return default logic
+				(specks != null
 				&& self.thrownBy is Player player 
 				&& self.Spear_NeedleCanFeed() && player.FoodInStomach < player.MaxFoodInStomach
-				&& PlayerFeatures.Diet.TryGet(player, out var diet)
-				&& diet.Meat > 0f
+				&& (!PlayerFeatures.Diet.TryGet(player, out var diet) 
+				|| (diet.Meat > 0f
 				&& (!diet.CreatureOverrides.TryGetValue(CreatureTemplate.Type.EggBug, out var value) || value > 0f)
-				&& (!diet.CreatureOverrides.TryGetValue(MoreSlugcatsEnums.CreatureTemplateType.FireBug, out var value2) || value2 > 0f);
+				&& (!diet.CreatureOverrides.TryGetValue(MoreSlugcatsEnums.CreatureTemplateType.FireBug, out var value2) || value2 > 0f))));
 		}
 
 		static bool CanCreateSpears(PlayerObjects.SpearCreatability specks)
@@ -79,10 +81,8 @@ internal class WeaponILHooks : IOwnHooks
 
 		static bool SpearHitSomethingFeed(Spear self, SharedPhysics.CollisionResult result, bool eu, PlayerObjects.SpearCreatability specks)
 		{
-			if (self.thrownBy is Player player)
+			if (self.thrownBy is Player player && SlugBaseCharacter.TryGet(player.SlugCatClass, out _))
 			{
-				//LATER: Add physics collisions to objects that normally don't get them (ex: slimemold)
-
 				var stickObject = false;
 				var defaultFood = 0f;
 				SlugBase.DataTypes.Diet diet = null;

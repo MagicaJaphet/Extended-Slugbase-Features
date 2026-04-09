@@ -12,6 +12,7 @@ using MonoMod.Cil;
 using Mono.Cecil.Cil;
 using RWCustom;
 using MagicaHookingLibrary.Helpers;
+using ExtendedSlugbase.Objects;
 
 namespace ExtendedSlugbase.Hooks.OnHooks
 {
@@ -112,9 +113,9 @@ namespace ExtendedSlugbase.Hooks.OnHooks
                 self.tailSpecks.AddToContainer(sLeaser, rCam, midGround);
             }
 
-            if (self.player.TryGetFeature(PlayerFeaturesExt.saintTongue, out _))
+            if (self.player.TryGetFeature(PlayerFeaturesExt.saintTongue, out _) && CWTs.PlayerCWT.TryGetData(self.player, out var cwt))
             {
-                midGround.AddChild(sLeaser.sprites[sLeaser.sprites.Length - 1]);
+                midGround.AddChild(sLeaser.sprites[cwt.saintTongueSprite]);
             }
         }
 
@@ -160,9 +161,10 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 
                 // Hell on earth
                 if (self.player.TryGetFeature(PlayerFeaturesExt.saintTongue, out _)
-                && self.TryGetCustomColor(slots, "Tongue", out var tongueCol))
+                && self.TryGetCustomColor(slots, "Tongue", out var tongueCol)
+				&& CWTs.PlayerCWT.TryGetData(self.player, out var cwt))
                 {
-                    TriangleMesh mesh = sLeaser.sprites[sLeaser.sprites.Length - 1] as TriangleMesh;
+                    TriangleMesh mesh = sLeaser.sprites[cwt.saintTongueSprite] as TriangleMesh;
                     for (int j = 0; j < mesh.verticeColors.Length; j++)
                     {
                         mesh.verticeColors[j] = Color.Lerp(palette.fogColor, tongueCol, 0.7f);
