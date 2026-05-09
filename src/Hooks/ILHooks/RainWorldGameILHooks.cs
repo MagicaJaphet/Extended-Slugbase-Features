@@ -1,16 +1,9 @@
-using System;
-using System.Linq;
-using ExtendedSlugbase.Features;
-using ExtendedSlugbase.Helpers;
 using MagicaHookingLibrary.Interfaces;
-using RWCustom;
-using SlugBase.Features;
 using MonoMod.Cil;
-using MoreSlugcats;
 using static MagicaHookingLibrary.Helpers.HookHelpers;
-using Mono.Cecil.Cil;
-using static ExtendedSlugbase.Objects.PlayerObjects;
 using MagicaHookingLibrary.Helpers;
+using ExtendedSlugbase.Features.GameRelated;
+using ExtendedSlugbase.Features.PlayerRelated;
 namespace ExtendedSlugbase.Hooks.ILHooks
 {
     public class RainWorldGameILHooks : IOwnHooks
@@ -18,30 +11,25 @@ namespace ExtendedSlugbase.Hooks.ILHooks
 
         public void PreApply()
         {
-			IL.RainWorldGame.Update += ILAction(RainWorldGame_Update);
-            IL.RainWorldGame.RawUpdate += ILAction(RainWorldGame_RawUpdate);
+			IL.RainWorldGame.Update += RainWorldGame_Update;
+            IL.RainWorldGame.RawUpdate += RainWorldGame_RawUpdate;
         }
 
-		private static void RainWorldGame_Update(ILCursor c)
+		private static void RainWorldGame_Update(ILContext il)
 		{
-            // Get Karma From Scavengers: Main implementation
-            static bool GetsKarmaFromScavs(bool isArtificer, RainWorldGame self)
-            {
-                return isArtificer || (self.TryGetFeature(GameFeaturesExt.getKarmaFromScavs, out bool getKarma) && getKarma);
-            }
+			ILCursor c = new(il);
 
-            c.TryMoveToNextSlugcatBool(
-                nameof(MoreSlugcatsEnums.SlugcatStatsName.Artificer).GetSlugcatFieldInfo()
-                ); // AFTER: if (ModManager.MSC && this.Players.Count > 0 && this.IsStorySession && this.StoryCharacter == MoreSlugcatsEnums.SlugcatStatsName.Artificer)
-            c.EmitLdarg0Delegate(GetsKarmaFromScavs);
+			GetKarmaFromScavs.Implementation.RainWorldGame_Update(c);
         }
 
 
-        private void RainWorldGame_RawUpdate(ILCursor c)
-        {
-            static float FramesPerSecondMushroom(float orig, RainWorldGame self)
+        private void RainWorldGame_RawUpdate(ILContext il)
+		{
+			ILCursor c = new(il);
+
+			static float FramesPerSecondMushroom(float orig, RainWorldGame self)
             {
-                if (ObjectInteractions.lastAteMushroomFPS is float fps)
+                if (ObjectInteractions.ObjectInteractibility.lastAteMushroomFPS is float fps)
                 {
                     return fps;
                 }

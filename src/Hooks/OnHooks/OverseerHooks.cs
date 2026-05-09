@@ -1,9 +1,6 @@
-using System;
-using ExtendedSlugbase.Features;
-using ExtendedSlugbase.Helpers;
 using MagicaHookingLibrary.Interfaces;
-using UnityEngine;
 using MonoMod.RuntimeDetour;
+using ExtendedSlugbase.Features.GameRelated;
 
 namespace ExtendedSlugbase.Hooks.OnHooks
 {
@@ -12,20 +9,8 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 
         public void PreApply()
         {
-            _ = new Hook(typeof(OverseerGraphics).GetProperty(nameof(OverseerGraphics.MainColor), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).GetGetMethod(), OverseerColorOverride);
+            _ = new Hook(typeof(OverseerGraphics).GetProperty(nameof(OverseerGraphics.MainColor), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).GetGetMethod(), OverseerColorOverrides.Implementation.OverseerGraphics_MainColor);
         }
-
-		internal static Color OverseerColorOverride(Func<OverseerGraphics, Color> orig, OverseerGraphics self)
-		{
-			if (!self.overseer.SafariOverseer && !self.overseer.SandboxOverseer 
-            && self.overseer.abstractCreature.world.game.TryGetFeature(GameFeaturesExt.overseerOverwrite, out var overrides) 
-            && overrides.TryGetValue((self.overseer.abstractCreature.abstractAI as OverseerAbstractAI).ownerIterator, out var overrideColor))
-			{
-				return overrideColor;
-			}
-
-			return orig(self);
-		}
         
         public void OnApply()
         {

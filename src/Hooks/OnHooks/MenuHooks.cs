@@ -1,5 +1,6 @@
+using ExtendedSlugbase.Extensions;
 using ExtendedSlugbase.Features;
-using ExtendedSlugbase.Helpers;
+using ExtendedSlugbase.Features.GameRelated;
 using MagicaHookingLibrary.Interfaces;
 using Menu;
 using MoreSlugcats;
@@ -15,17 +16,31 @@ namespace ExtendedSlugbase.Hooks.OnHooks
     {
         public void PreApply()
         {
+			On.Menu.SleepAndDeathScreen.AddPassageButton += SleepAndDeathScreen_AddPassageButton;
 			On.Menu.SlugcatSelectMenu.CommunicateWithUpcomingProcess += SlugcatSelectMenu_CommunicateWithUpcomingProcess;
             On.Menu.SlugcatSelectMenu.SlugcatPageContinue.ctor += SlugcatSelectMenu_SlugcatPageContinue_ctor;
             On.Menu.SlugcatSelectMenu.ContinueStartedGame += SlugcatSelectMenu_ContinueStartedGame;
             On.Menu.SlugcatSelectMenu.UpdateStartButtonText += SlugcatSelectMenu_UpdateStartButtonText;
         }
+		private void SleepAndDeathScreen_AddPassageButton(On.Menu.SleepAndDeathScreen.orig_AddPassageButton orig, SleepAndDeathScreen self, bool buttonBlack)
+		{
+			if (DisablePassages.Implementation.SleepAndDeathScreen_AddPassageButton(self))
+			{
+				return;
+			}
+
+			orig(self, buttonBlack);
+		}
 
 		private void SlugcatSelectMenu_CommunicateWithUpcomingProcess(On.Menu.SlugcatSelectMenu.orig_CommunicateWithUpcomingProcess orig, SlugcatSelectMenu self, MainLoopProcess nextProcess)
 		{
 			if (nextProcess.ID == ProcessManager.ProcessID.Statistics)
 			{
-				KarmaLadderScreen.SleepDeathScreenDataPackage package = new(self.redSaveState.food, new IntVector2(self.redSaveState.deathPersistentSaveData.karma, self.redSaveState.deathPersistentSaveData.karmaCap), self.redSaveState.deathPersistentSaveData.reinforcedKarma, -1, new Vector2(0f, 0f), null, self.redSaveState, new SlugcatStats(ModManager.MSC || Custom.rainWorld.progression.miscProgressionData.currentlySelectedSinglePlayerSlugcat.TryGetFeature(GameFeaturesExt.cycleLimit, out _) ? self.redSaveState.saveStateNumber : SlugcatStats.Name.Red, false), null, false, false);
+				KarmaLadderScreen.SleepDeathScreenDataPackage package = new(self.redSaveState.food, new IntVector2(self.redSaveState.deathPersistentSaveData.karma, self.redSaveState.deathPersistentSaveData.karmaCap), self.redSaveState.deathPersistentSaveData.reinforcedKarma, -1, new Vector2(0f, 0f), null, self.redSaveState, 
+					new SlugcatStats(ModManager.MSC 
+					|| CycleLimit.Implementation.Menu_SlugcatSelectMenu_CommunicateWithUpcomingProcess()
+					|| NoContinueAfterAscension.Implementation.Menu_SlugcatSelectMenu_CommunicateWithUpcomingProcess()
+					? self.redSaveState.saveStateNumber : SlugcatStats.Name.Red, false), null, false, false);
 				(nextProcess as StoryGameStatisticsScreen).GetDataFromGame(package);
 				return;
 			}
@@ -37,49 +52,24 @@ namespace ExtendedSlugbase.Hooks.OnHooks
         {
             orig(self, menu, owner, pageIndex, slugcatNumber);
 
-            if (slugcatNumber.TryGetFeature(GameFeaturesExt.cycleLimit, out var cycleLimit))
-            {
-                string text = Region.GetRegionFullName(self.saveGameData.shelterName.Substring(0, self.saveGameData.shelterName.IndexOf("_")), slugcatNumber);
-                if (text.Length > 0)
-                {
-                    text = menu.Translate(text);
-                    text = string.Concat(
-                    [
-                        text,
-                        " - ",
-                        menu.Translate("Cycle"),
-                        " ",
-                        (cycleLimit.Cycles - self.saveGameData.cycle).ToString()
-                    ]);
-                    SpeedRunTimer.CampaignTimeTracker campaignTimeTracker = SpeedRunTimer.GetCampaignTimeTracker(slugcatNumber);
-                    if (campaignTimeTracker != null)
-                    {
-                        if (campaignTimeTracker.TotalFreeTime == 0.0 || campaignTimeTracker.TotalFixedTime == 0.0)
-                        {
-                            campaignTimeTracker.LoadOldTimings(self.saveGameData.gameTimeAlive, self.saveGameData.gameTimeDead);
-                        }
-                        if (ModManager.MMF)
-                        {
-                            text = text + " (" + campaignTimeTracker.TotalFreeTimeSpan.GetIGTFormat(MMF.cfgSpeedrunTimer.Value || menu.manager.rainWorld.options.validation) + ")";
-                        }
-                    }
-                }
-                self.regionLabel.text = text;
-            }
+			CycleLimit.Implementation.Menu_SlugcatSelectMenu_SlugcatPageContinue_ctor(self, menu, owner, pageIndex, slugcatNumber);
         }
 
 
         private void SlugcatSelectMenu_ContinueStartedGame(On.Menu.SlugcatSelectMenu.orig_ContinueStartedGame orig, Menu.SlugcatSelectMenu self, SlugcatStats.Name storyGameCharacter)
-        {
+		{
 			SlugcatSelectMenu.SlugcatPage page = self.slugcatPages[self.slugcatPageIndex];
-			if (page.slugcatNumber.TryGetFeature(GameFeaturesExt.cycleLimit, out var cycleLimit) && page.slugcatImage.sceneID == cycleLimit.DeathSceneID)
-            {
-                self.redSaveState = self.manager.rainWorld.progression.GetOrInitiateSaveState(storyGameCharacter, null, self.manager.menuSetup, false);
-                self.manager.RequestMainProcessSwitch(ProcessManager.ProcessID.Statistics);
-                self.PlaySound(SoundID.MENU_Switch_Page_Out);
-                return;
-            }
-            orig(self, storyGameCharacter);
+
+			if (CycleLimit.Implementation.ReachedCycleLimit(page)
+				|| NoContinueAfterAscension.Implementation.Ascended(page))
+			{
+				self.redSaveState = self.manager.rainWorld.progression.GetOrInitiateSaveState(storyGameCharacter, null, self.manager.menuSetup, false);
+				self.manager.RequestMainProcessSwitch(ProcessManager.ProcessID.Statistics);
+				self.PlaySound(SoundID.MENU_Switch_Page_Out);
+				return;
+			}
+
+			orig(self, storyGameCharacter);
         }
 
         private void SlugcatSelectMenu_UpdateStartButtonText(On.Menu.SlugcatSelectMenu.orig_UpdateStartButtonText orig, Menu.SlugcatSelectMenu self)
@@ -87,11 +77,13 @@ namespace ExtendedSlugbase.Hooks.OnHooks
             orig(self);
 
 			SlugcatSelectMenu.SlugcatPage page = self.slugcatPages[self.slugcatPageIndex];
-			if (page.slugcatNumber.TryGetFeature(GameFeaturesExt.cycleLimit, out var cycleLimit) && page.slugcatImage.sceneID == cycleLimit.DeathSceneID)
-            {
-                self.startButton.menuLabel.text = self.Translate("STATISTICS");
-            }
-        }
+
+			if (CycleLimit.Implementation.ReachedCycleLimit(page)
+				|| NoContinueAfterAscension.Implementation.Ascended(page))
+			{
+				self.startButton.menuLabel.text = self.Translate("STATISTICS");
+			}
+		}
 
 
         public void OnApply()

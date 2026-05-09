@@ -1,13 +1,5 @@
-using System;
-using ExtendedSlugbase.Features;
-using ExtendedSlugbase.Helpers;
-using MagicaHookingLibrary.Helpers;
 using MagicaHookingLibrary.Interfaces;
-using Mono.Cecil.Cil;
-using MonoMod.Cil;
-using MoreSlugcats;
-using static ExtendedSlugbase.Objects.PlayerObjects;
-using System.Collections.Generic;
+using ExtendedSlugbase.Features.GameRelated;
 
 namespace ExtendedSlugbase.Hooks.OnHooks
 {
@@ -15,13 +7,8 @@ namespace ExtendedSlugbase.Hooks.OnHooks
     {
         public void PreApply()
         {
-            On.KarmaFlower.CanSpawnKarmaFlower += KarmaFlower_CanSpawnKarmaFlower;
+            On.KarmaFlower.CanSpawnKarmaFlower += SpawnKarmaFlowers.Implementation.KarmaFlower_CanSpawnKarmaFlower;
         }
-        
-        private static bool KarmaFlower_CanSpawnKarmaFlower(On.KarmaFlower.orig_CanSpawnKarmaFlower orig, Room room)
-		{
-			return orig(room) && (!room.game.TryGetFeature(GameFeaturesExt.spawnKarmaFlowers, out bool shouldSpawn) || shouldSpawn);
-		}
 
         public void OnApply()
         {

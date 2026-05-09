@@ -1,6 +1,5 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
-using ExtendedSlugbase.Helpers;
 using MagicaHookingLibrary;
 using MagicaHookingLibrary.Helpers;
 using MonoMod.RuntimeDetour;
@@ -9,12 +8,13 @@ using SlugBase.Features;
 using System.Linq;
 using System.Reflection;
 using System.Security.Permissions;
-using static ExtendedSlugbase.Helpers.FeatureHelpers;
 using System;
 using ExtendedSlugbase.Features;
 using SlugBase.DataTypes;
-using static ExtendedSlugbase.Objects.SlugbaseObjects;
 using ExtendedSlugbase.Hooks.OnHooks;
+using static ExtendedSlugbase.Features.ExtFeatureTypes;
+using static ExtendedSlugbase.Extensions.SlugbaseHelpers;
+using ExtendedSlugbase.Assets;
 
 // Allows access to private members
 #pragma warning disable CS0618
@@ -30,6 +30,20 @@ namespace ExtendedSlugbase;
 
 public class Plugin : PluginTemplate
 {
+	//FEATURE: Food that stuns or kills if it gives negative pips
+	//FEATURE: Saint ascension (toggleable flight)
+	//FEATURE: Modify movement bonuses/penalties (land and water)
+	//FEATURE: Watcher invisibility
+	//FEATURE: expedition perk slow time
+	//FEATURE: expedition burdens in campaign
+	//FEATURE: Configure player grasps (and add sprites)
+	//FEATURE: Embedded pearl
+	//FEATURE: Lock abilities behind a check, with the ability to add tutorial text when first encountering the ability to use them
+
+	//FEATURE: Mauling side effects
+	//FEATURE: Weaver cosmetic toggles
+
+	// TODO: Replace with more rich logger
 	public static new ManualLogSource Logger;
 
 	public const string _MOD_ID = "magica.extendedslugbasefeatures";
@@ -38,14 +52,15 @@ public class Plugin : PluginTemplate
 
 	public static bool ExtendedMenuScenes { get; internal set; }
 
-	//LATER: Add translation support for slugbase
+	//TODO: Add translation support for slugbase
 	public Plugin() : base()
 	{
 		Logger = base.Logger;
 
-		_ = new PlayerFeaturesExt();
-		_ = new GameFeaturesExt();
+		_ = new ExtPlayerFeatures();
+		_ = new ExtGameFeatures();
 		_ = new TimelineFeatures();
+		_ = new ObsoleteFeatures();
 
 		// Slugbase hook to trace where Features are initalized from
 		try
@@ -57,21 +72,21 @@ public class Plugin : PluginTemplate
 			let attr = field.GetCustomAttribute(typeof(RequiresDLC)) let feature = field.GetValue(null) where feature != null && attr != null 
 			select ((feature as Feature).ID, attr as RequiresDLC))
 			{
-				if (SlugbaseHelpers.RegisteredFeatures.TryGetValue(feature, out var info))
+				if (RegisteredFeatures.TryGetValue(feature, out var info))
 				{
 					info.dlc = dlc;
-					SlugbaseHelpers.RegisteredFeatures[feature] = info;
+					RegisteredFeatures[feature] = info;
 				}
 				else
 				{
-					SlugbaseHelpers.RegisteredFeatures.Add(feature, new() { dlc = dlc });        
+					RegisteredFeatures.Add(feature, new() { dlc = dlc });        
 				}
 			}
 			
 			_ = new Hook(typeof(ColorSlot).GetConstructor([typeof(int), typeof(JsonAny)]), SlugbaseHooks.ColorSlot_ctor);
-			_ = new Hook(SlugbaseHelpers.FeatureManager.GetMethod(nameof(SlugbaseHelpers.Register), BindingFlags.Public | BindingFlags.Static), SlugbaseHooks.FeatureManagerRegisterHook);
+			_ = new Hook(FeatureManager.GetMethod(nameof(Register), BindingFlags.Public | BindingFlags.Static), SlugbaseHooks.FeatureManagerRegisterHook);
 			_ = new Hook(typeof(SlugBaseCharacter.FeatureList).GetMethod(nameof(SlugBaseCharacter.FeatureList.Set), BindingFlags.Public | BindingFlags.Instance), SlugbaseHooks.FeatureListSet);
-			_ = new Hook(SlugbaseHelpers.AddMany, SlugbaseHooks.FeatureListAddMany);
+			_ = new Hook(AddMany, SlugbaseHooks.FeatureListAddMany);
 		}
 		catch (Exception ex)
 		{
@@ -88,7 +103,7 @@ public class Plugin : PluginTemplate
     {
 		ExtendedMenuScenes = MiscHelpers.IsModActive("magica.extendedmenuscenes");
 
-		ModOptions.RegisterOI();
+		RemixOptions.RegisterOI();
         HookHelpers.ApplyHooks(HookHelpers.HookType.On, Logger);
     }
 

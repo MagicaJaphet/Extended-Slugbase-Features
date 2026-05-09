@@ -1,5 +1,4 @@
 ﻿using ExtendedMenuscenes;
-using ExtendedSlugbase.Objects;
 using Menu;
 using SlugBase.Assets;
 using UnityEngine;

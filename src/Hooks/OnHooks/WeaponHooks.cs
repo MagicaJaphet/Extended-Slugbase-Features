@@ -1,7 +1,7 @@
 using System;
+using ExtendedSlugbase.Extensions;
 using ExtendedSlugbase.Features;
-using ExtendedSlugbase.Helpers;
-using ExtendedSlugbase.Objects;
+using ExtendedSlugbase.Features.PlayerRelated;
 using MagicaHookingLibrary.Interfaces;
 using MoreSlugcats;
 using RWCustom;
@@ -37,7 +37,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 				}
 				if (obj is Mushroom)
 				{
-					player.mushroomCounter += player.TryGetFeature(PlayerFeaturesExt.objectInteractions, out var objectInteractions) ? objectInteractions.MushroomTimer : 320;
+					ObjectInteractions.Implementation.Spear_HitSomethingWithoutStopping(player);
 				}
 				if (obj is KarmaFlower)
 				{
@@ -114,7 +114,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 
 		private bool Spear_Spear_NeedleCanFeed(On.Spear.orig_Spear_NeedleCanFeed orig, Spear self)
 		{
-			return orig(self) || (self.thrownBy is Player player && player.TryGetFeature(PlayerFeaturesExt.canCreateSpears, out var specks) && specks.FeedFromSpears && self.spearmasterNeedle_hasConnection);
+			return orig(self) || CanCreateSpears.Implementation.Spear_Spear_NeedleCanFeed(self);
 		}
 
 		private void ExplosiveSpear_DrawSprites(On.ExplosiveSpear.orig_DrawSprites orig, ExplosiveSpear self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)

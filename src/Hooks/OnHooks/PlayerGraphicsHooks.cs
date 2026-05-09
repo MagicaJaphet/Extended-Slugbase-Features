@@ -3,7 +3,6 @@ using MagicaHookingLibrary.Interfaces;
 using SlugBase;
 using SlugBase.Features;
 using SlugBase.DataTypes;
-using ExtendedSlugbase.Helpers;
 using ExtendedSlugbase.Features;
 using BepInEx.Logging;
 using UnityEngine;
@@ -12,7 +11,9 @@ using MonoMod.Cil;
 using Mono.Cecil.Cil;
 using RWCustom;
 using MagicaHookingLibrary.Helpers;
-using ExtendedSlugbase.Objects;
+using ExtendedSlugbase.Extensions;
+using ExtendedSlugbase.Features.GameRelated;
+using ExtendedSlugbase.Features.PlayerRelated;
 
 namespace ExtendedSlugbase.Hooks.OnHooks
 {
@@ -22,7 +23,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
         {
             On.PlayerGraphics.MSCUpdate += PlayerGraphics_MSCUpdate;
             On.PlayerGraphics.ctor += PlayerGraphics_Ctor;
-            On.PlayerGraphics.AxolotlGills.ctor += PlayerGraphics_AxolotlGills_ctor2;
+            On.PlayerGraphics.AxolotlGills.ctor += RivuletGills.Implementation.PlayerGraphics_AxolotlGills_ctor2;
             On.PlayerGraphics.AddToContainer += PlayerGraphics_AddToContainer;
             On.PlayerGraphics.Update += PlayerGraphics_Update;
             On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
@@ -35,66 +36,22 @@ namespace ExtendedSlugbase.Hooks.OnHooks
         {
             orig(self);
 
-            if (self.player.TryGetFeature(PlayerFeaturesExt.canCreateSpears, out var specks) && self.tailSpecks.spearProg > 0.1f && !specks.ReactsToSpears)
-            {
-                self.blink = 0;
-            }
+			CanCreateSpears.Implementation.PlayerGraphics_MSCUpdate(self);
         }
 
         private static void PlayerGraphics_Ctor(On.PlayerGraphics.orig_ctor orig, PlayerGraphics self, PhysicalObject ow)
         {
             orig(self, ow);
 
-            // Cycles to fade in
-            var game = self.player.abstractCreature.world.game;
-            if (game.IsStorySession 
-            && game.TryGetFeature(GameFeatures.TheMark, out bool hasMark) && hasMark 
-            && game.TryGetFeature(GameFeaturesExt.revealMarkOverTotalCycles, out int cycles))
-            {
-                self.markBaseAlpha = Mathf.Pow(Mathf.InverseLerp(4f, cycles, self.player.abstractCreature.world.game.GetStorySession.saveState.cycleNumber), 3.5f);
-            }
+			RevealMarkOverCycles.Implementation.PlayerGraphics_Ctor(self);
 
             int startSprite = 12;
             
-            if (self.player.TryGetFeature(PlayerFeaturesExt.rivGills, out _))
-            {
-                self.gills = new(self, startSprite);
-                startSprite += self.gills.numberOfSprites;
-            }
+            RivuletGills.Implementation.PlayerGraphics_Ctor(self, ref startSprite);
 
-            if (self.player.TryGetFeature(PlayerFeaturesExt.canCreateSpears, out _))
-            {
-                self.tailSpecks = new(self, startSprite);
-                startSprite += self.tailSpecks.numberOfSprites;
-            }
+            CanCreateSpears.Implementation.PlayerGraphics_Ctor(self, ref startSprite);
 
-            if (self.player.TryGetFeature(PlayerFeaturesExt.saintTongue, out var tongue))
-            {
-                self.ropeSegments = new PlayerGraphics.RopeSegment[tongue.Segments];
-                for (int i = 0; i < tongue.Segments; i++)
-                {
-                    self.ropeSegments[i] = new(i, self);
-                }
-            }
-        }
-
-        private void PlayerGraphics_AxolotlGills_ctor2(On.PlayerGraphics.AxolotlGills.orig_ctor orig, PlayerGraphics.AxolotlGills self, PlayerGraphics pGraphics, int startSprite)
-        {
-            orig(self, pGraphics, startSprite);
-
-            if (pGraphics.player.TryGetFeature(PlayerFeaturesExt.rivGills, out var gills))
-            {
-                for (int i = 0; i < self.scalesPositions.Length / 2; i++)
-                {
-                    for (int j = 0; j < 2; j++)
-                    {
-                        var index = i * 2 + j;
-                        self.scalesPositions[index] = new Vector2((j == 0) ? (-gills.Spread) : gills.Spread, 1f - gills.Spread);
-                        self.scaleObjects[index].length = gills.Length ?? self.scaleObjects[index].length;
-				        self.scaleObjects[index].width = gills.Width ?? self.scaleObjects[index].width;
-                    }
-                }
-            }
+            SaintTongue.Implementation.PlayerGraphics_Ctor(self);
         }
 
         private void PlayerGraphics_AddToContainer(On.PlayerGraphics.orig_AddToContainer orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContatiner)
@@ -103,20 +60,11 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 
             var midGround = rCam.ReturnFContainer("Midground");
 
-            if (self.player.TryGetFeature(PlayerFeaturesExt.rivGills, out _))
-            {
-                self.gills.AddToContainer(sLeaser, rCam, midGround);
-            }
+			RivuletGills.Implementation.PlayerGraphics_AddToContainer(self, sLeaser, rCam, midGround);
 
-            if (self.player.TryGetFeature(PlayerFeaturesExt.canCreateSpears, out _))
-            {
-                self.tailSpecks.AddToContainer(sLeaser, rCam, midGround);
-            }
+			CanCreateSpears.Implementation.PlayerGraphics_AddToContainer(self, sLeaser, rCam, midGround);
 
-            if (self.player.TryGetFeature(PlayerFeaturesExt.saintTongue, out _) && CWTs.PlayerCWT.TryGetData(self.player, out var cwt))
-            {
-                midGround.AddChild(sLeaser.sprites[cwt.saintTongueSprite]);
-            }
+			SaintTongue.Implementation.PlayerGraphics_AddToContainer(self, sLeaser, midGround);
         }
 
         private void PlayerGraphics_Update(On.PlayerGraphics.orig_Update orig, PlayerGraphics self)
@@ -136,9 +84,9 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 
         private bool Player_SaintFaceCondition(On.PlayerGraphics.orig_SaintFaceCondition orig, PlayerGraphics self)
         {
-            if (self.player.TryGetFeature(PlayerFeaturesExt.usesSaintFaceCondition, out bool saintFace))
+            if (UseSaintFace.Implementation.PlayerGraphics_SaintFaceCondition(self))
             {
-                return saintFace;
+                return true;
             }
             return orig(self);
         }
@@ -152,24 +100,9 @@ namespace ExtendedSlugbase.Hooks.OnHooks
             {
                 var bodyColor = sLeaser.sprites[0].color; // Default body color to be used when needed
 
-                if (self.player.TryGetFeature(PlayerFeaturesExt.rivGills, out _)
-                && self.TryGetCustomColor(slots, "Gills", out var gillCol))
-                {
-                    self.gills?.SetGillColors(bodyColor, gillCol);
-                    self.gills?.ApplyPalette(sLeaser, rCam, palette);
-                }
+				RivuletGills.Implementation.PlayerGraphics_ApplyPalette(self, sLeaser, rCam, palette, bodyColor, slots);
 
-                // Hell on earth
-                if (self.player.TryGetFeature(PlayerFeaturesExt.saintTongue, out _)
-                && self.TryGetCustomColor(slots, "Tongue", out var tongueCol)
-				&& CWTs.PlayerCWT.TryGetData(self.player, out var cwt))
-                {
-                    TriangleMesh mesh = sLeaser.sprites[cwt.saintTongueSprite] as TriangleMesh;
-                    for (int j = 0; j < mesh.verticeColors.Length; j++)
-                    {
-                        mesh.verticeColors[j] = Color.Lerp(palette.fogColor, tongueCol, 0.7f);
-                    }
-                }
+                SaintTongue.Implementation.PlayerGraphics_ApplyPalette(self, sLeaser, palette, slots);
             }
         }
 

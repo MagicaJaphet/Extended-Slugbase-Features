@@ -1,14 +1,9 @@
-using System;
-using System.IO;
-using System.Linq;
-using ExtendedSlugbase.Features;
-using ExtendedSlugbase.Helpers;
-using ExtendedSlugbase.Objects;
+using ExtendedSlugbase.Assets;
+using ExtendedSlugbase.Features.GameRelated;
+using ExtendedSlugbase.Features.TimelineRelated;
 using MagicaHookingLibrary.Interfaces;
-using RWCustom;
 using SlugBase;
 using UnityEngine;
-using static ExtendedSlugbase.Objects.SlugbaseObjects;
 
 namespace ExtendedSlugbase.Hooks.OnHooks
 {
@@ -31,7 +26,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
         {
 			if (self.owner is JollyCoop.JollyMenu.JollyPlayerSelector selector && SlugBaseCharacter.TryGet(selector.JollyOptions(selector.index).PlayerClass, out var slugBase))
 			{
-				return AtlasManager.TryGetElement(slugBase, AtlasManager.SpriteElement.JollyPlayerUniqueIcon, out _);
+				return AtlasManager.TryGetElement(slugBase, AtlasManager.FixedSpriteElements.JollyPlayerUniqueIcon, out _);
 			}
             return orig(self);
         }
@@ -41,9 +36,9 @@ namespace ExtendedSlugbase.Hooks.OnHooks
         {
 			SlugcatStats.Name playerClass = self.JollyOptions(self.index).PlayerClass;
 			if (SlugBaseCharacter.TryGet(playerClass, out var slugBase)
-				&& AtlasManager.TryGetElement(slugBase, AtlasManager.SpriteElement.JollyPlayerIcon, out _) || (AtlasManager.TryGetElement(slugBase, AtlasManager.SpriteElement.JollyPlayerUniqueIcon, out _))) 
+				&& AtlasManager.TryGetElement(slugBase, AtlasManager.FixedSpriteElements.JollyPlayerIcon, out _) || (AtlasManager.TryGetElement(slugBase, AtlasManager.FixedSpriteElements.JollyPlayerUniqueIcon, out _))) 
 			{
-				return AtlasManager.GetNameKey(AtlasManager.SpriteElement.JollyPlayerIcon, slugBase);
+				return AtlasManager.GetNameKey(AtlasManager.FixedSpriteElements.JollyPlayerIcon, slugBase);
 			}
 
             return orig(self);
@@ -55,7 +50,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
            	orig(self, jollyHud);
 			
 			if (jollyHud.abstractPlayer?.realizedCreature is Player player && SlugBaseCharacter.Registry.TryGet(player.SlugCatClass, out var slugBase) 
-			&& AtlasManager.TryGetElement(slugBase, AtlasManager.SpriteElement.JollyIconDead, out var element))
+			&& AtlasManager.TryGetElement(slugBase, AtlasManager.FixedSpriteElements.JollyIconDead, out var element))
 			{
 				self.symbolSprite.SetElementByName(element);
 			}
@@ -67,7 +62,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 			orig(self);
 
 			if (self.iconSprite.element.name == "Multiplayer_Death" && self.player?.realizedCreature is Player player && SlugBaseCharacter.Registry.TryGet(player.SlugCatClass, out var slugBase) 
-			&& AtlasManager.TryGetElement(slugBase, AtlasManager.SpriteElement.JollyIconDead, out var element))
+			&& AtlasManager.TryGetElement(slugBase, AtlasManager.FixedSpriteElements.JollyIconDead, out var element))
 			{
 				self.iconSprite.SetElementByName(element);
 			}
@@ -80,7 +75,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
             orig(self, meter, associatedPlayer, color);
 
 			if (associatedPlayer?.realizedCreature is Player player && SlugBaseCharacter.Registry.TryGet(player.SlugCatClass, out var slugBase)
-				&& AtlasManager.TryGetElement(slugBase, AtlasManager.SpriteElement.JollyIcon, out var element))
+				&& AtlasManager.TryGetElement(slugBase, AtlasManager.FixedSpriteElements.JollyIcon, out var element))
 			{
 				self.iconSprite.SetElementByName(element);
 			}
@@ -91,32 +86,14 @@ namespace ExtendedSlugbase.Hooks.OnHooks
         {
             orig(self);
 
-			if (self.owner.hud.owner is Player player && player.abstractCreature.world.game.TryGetFeature(GameFeaturesExt.cycleLimit, out var hardMode))
-			{
-				int cycles = hardMode.Cycles - player.abstractCreature.world.game.GetStorySession.saveState.cycleNumber;
-
-				self.red = cycles <= 0 ? 1 : -1;
-				self.label.text = $"{self.owner.hud.rainWorld.inGameTranslator.Translate("Cycle")} {cycles}";
-			}
-        }
-
-
-        internal static bool NoRainTimer(HUD.HUD hud)
-        {
-            if (hud?.owner.GetOwnerType() == HUD.HUD.OwnerType.Player && hud?.owner is Player player)
-            {
-                return ((ModManager.MSC && player.abstractCreature.world.game.TimelinePoint == SlugcatStats.Timeline.Saint) 
-                || (player.abstractCreature.world.game.TryGetFeature(TimelineFeatures.showRainTimer, out bool showTimer) && !showTimer)) 
-                && hud?.map?.RegionName != "HR";
-            }
-            return false;
+			CycleLimit.Implementation.HUD_Map_CycleLabel_UpdateCycleText(self);
         }
 
 		
 		private static void RainMeter_ctor(On.HUD.RainMeter.orig_ctor orig, HUD.RainMeter self, HUD.HUD hud, FContainer fContainer)
 		{
 			orig(self, hud, fContainer);
-			if (NoRainTimer(hud))
+			if (ShowRainTimer.Implementation.NoRainTimer(hud))
 			{
 				self.halfTimeShown = true;
 			}
@@ -124,7 +101,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 
         private static void RainMeter_Update(On.HUD.RainMeter.orig_Update orig, HUD.RainMeter self)
 		{
-			if (NoRainTimer(self.hud))
+			if (ShowRainTimer.Implementation.NoRainTimer(self.hud))
 			{
 				self.halfTimeShown = true;
 			}
@@ -134,7 +111,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 		
 		private static void RainMeter_Draw(On.HUD.RainMeter.orig_Draw orig, HUD.RainMeter self, float timeStacker)
 		{
-			if (NoRainTimer(self.hud))
+			if (ShowRainTimer.Implementation.NoRainTimer(self.hud))
 			{
 				return;
 			}

@@ -1,10 +1,6 @@
-using System;
 using MagicaHookingLibrary.Interfaces;
-using static MagicaHookingLibrary.Helpers.HookHelpers;
 using MonoMod.Cil;
-using ExtendedSlugbase.Features;
-using Mono.Cecil.Cil;
-using ExtendedSlugbase.Helpers;
+using ExtendedSlugbase.Features.GameRelated;
 
 namespace ExtendedSlugbase.Hooks.ILHooks
 {
@@ -12,22 +8,14 @@ namespace ExtendedSlugbase.Hooks.ILHooks
     {
         public void PreApply()
         {
-            IL.Oracle.ctor += ILAction(Oracle_ctor);
+            IL.Oracle.ctor += Oracle_ctor;
         }
 
-        // Uses SLOracleBehaviorHasMark if the slugcat is enlightened
-        private void Oracle_ctor(ILCursor c)
-        {
-            static bool CanTalkToGhosts(bool hasMark, Oracle self)
-            {
-                return hasMark || (self.room.game.StoryCharacter.TryGetFeature(GameFeaturesExt.enlightenedState, out bool enlightened) && enlightened);
-            }
+        private void Oracle_ctor(ILContext il)
+		{
+			ILCursor c = new(il);
 
-            c.GotoNext(
-                MoveType.After,
-                x => x.MatchLdfld(typeof(DeathPersistentSaveData).GetField(nameof(DeathPersistentSaveData.theMark)))
-                ); // if (this.room.game.session is StoryGameSession && ((this.room.game.session as StoryGameSession).saveState.deathPersistentSaveData.theMark
-            c.EmitLdarg0Delegate(CanTalkToGhosts);
+			EnlightenedState.Implementation.Oracle_ctor(c);
         }
 
 

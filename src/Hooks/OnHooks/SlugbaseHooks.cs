@@ -3,23 +3,22 @@ using MagicaHookingLibrary.Interfaces;
 using MonoMod.RuntimeDetour;
 using SlugBase.DataTypes;
 using SlugBase.Features;
-using static ExtendedSlugbase.Objects.PlayerObjects;
-using static ExtendedSlugbase.Helpers.FeatureHelpers;
-using static ExtendedSlugbase.Objects.SlugbaseObjects;
-using System.IO;
+using static ExtendedSlugbase.Extensions.SlugBaseExtensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using ExtendedSlugbase.Helpers;
 using SlugBase;
 using MonoMod.Cil;
 using UnityEngine;
 using Mono.Cecil.Cil;
 using RWCustom;
-using ExtendedSlugbase;
 using Menu;
-using ExtendedSlugbase.Objects;
+using ExtendedSlugbase;
+using ExtendedSlugbase.Extensions;
+using ExtendedSlugbase.Assets;
+using ExtendedSlugbase.DataTypes;
+using ExtendedSlugbase.Features;
 
 namespace ExtendedSlugbase.Hooks.OnHooks
 {
@@ -57,7 +56,6 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 
     			self.Variants = arenaColors;
     			extSlot.VariantPaletteIndexes = arenaPalettes;
-				Plugin.Logger.LogInfo(extSlot.VariantPaletteIndexes?.Length.ToString() ?? "null");
     		}
     	}
 
@@ -80,19 +78,19 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 
     	internal static void FeatureListSet(Action<SlugBaseCharacter.FeatureList, Feature, JsonAny> orig, SlugBaseCharacter.FeatureList self, Feature feature, JsonAny json)
     	{
-    		SlugbaseHelpers.CheckForInvalidDLC(feature.ID, json, throwDLCErrors[self]);
+    		SlugbaseHelpers.CheckForInvalidDLC(feature.ID, json, ExtFeatureTypes.throwDLCErrors[self]);
 
     		orig(self, feature, json);
     	}
 
     	internal static void FeatureListAddMany(Action<SlugBaseCharacter.FeatureList, JsonObject> orig, SlugBaseCharacter.FeatureList self, JsonObject json)
     	{
-			throwDLCErrors.Add(self, !json.TryGet(ignoreDLCErrors.ID, out bool throwErrors) || !throwErrors);
+			ExtFeatureTypes.throwDLCErrors.Add(self, !json.TryGet(ExtFeatureTypes.ignoreDLCErrors.ID, out bool throwErrors) || !throwErrors);
     		foreach ((string key, JsonAny value) in json.GetKeyPairEnumerator())
     		{
     			if (SlugbaseHelpers.InvokeTryGetFeature(key, out var feature))
     			{
-    				SlugbaseHelpers.CheckForInvalidDLC(feature.ID, value, throwDLCErrors[self]);
+    				SlugbaseHelpers.CheckForInvalidDLC(feature.ID, value, ExtFeatureTypes.throwDLCErrors[self]);
     			}
     		}
     		orig(self, json);
@@ -100,18 +98,18 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 
     	public void PreApply()
     	{
-			_ = new Hook(typeof(SlugBase.Assets.CustomScene).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, [typeof(MenuScene.SceneID), typeof(JsonObject)], null), ExtCustomScene);
+			_ = new Hook(typeof(SlugBase.Assets.CustomScene).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, [typeof(MenuScene.SceneID), typeof(JsonObject)], null), ExtCustomScene_ctor);
     		_ = new Hook(SlugbaseHelpers.FeatureHooks.GetMethod("PlayerGraphics_ApplyPalette", BindingFlags.NonPublic | BindingFlags.Static), Slugbase_ApplyPalette);
     		_ = new Hook(SlugbaseHelpers.FeatureHooks.GetMethod("PlayerGraphics_DefaultBodyPartColorHex", BindingFlags.NonPublic | BindingFlags.Static), Slugbase_DefaultBodyPartColorHex);
     		_ = new Hook(SlugbaseHelpers.FeatureHooks.GetMethod("PlayerGraphics_DefaultSlugcatColor", BindingFlags.NonPublic | BindingFlags.Static), Slugbase_DefaultSlugcatColor);
     		_ = new Hook(SlugbaseHelpers.FeatureHooks.GetMethod("PlayerGraphics_DrawSprites", BindingFlags.NonPublic | BindingFlags.Static), SlugbaseHooks.PlayerGraphics_DrawSprites);
     	}
 
-		private static void ExtCustomScene(Action<SlugBase.Assets.CustomScene, MenuScene.SceneID, JsonObject> orig, SlugBase.Assets.CustomScene self, MenuScene.SceneID id, JsonObject json)
+		private static void ExtCustomScene_ctor(Action<SlugBase.Assets.CustomScene, MenuScene.SceneID, JsonObject> orig, SlugBase.Assets.CustomScene self, MenuScene.SceneID id, JsonObject json)
 		{
 			orig(self, id, json);
 
-			GameObjects.ExtCustomScene.ExtCustomScenes.Add(self, new(self, json));
+			ExtCustomScene.ExtCustomScenes.Add(self, new(self, json));
 		}
 
 		// Default behavior: Overwrite pure black with an offshade
