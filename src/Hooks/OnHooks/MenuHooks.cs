@@ -1,9 +1,7 @@
 using ExtendedSlugbase.Extensions;
-using ExtendedSlugbase.Features;
 using ExtendedSlugbase.Features.GameRelated;
 using MagicaHookingLibrary.Interfaces;
 using Menu;
-using MoreSlugcats;
 using RWCustom;
 using SlugBase.Assets;
 using SlugBase.Features;
@@ -22,6 +20,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
             On.Menu.SlugcatSelectMenu.ContinueStartedGame += SlugcatSelectMenu_ContinueStartedGame;
             On.Menu.SlugcatSelectMenu.UpdateStartButtonText += SlugcatSelectMenu_UpdateStartButtonText;
         }
+
 		private void SleepAndDeathScreen_AddPassageButton(On.Menu.SleepAndDeathScreen.orig_AddPassageButton orig, SleepAndDeathScreen self, bool buttonBlack)
 		{
 			if (DisablePassages.Implementation.SleepAndDeathScreen_AddPassageButton(self))
@@ -88,6 +87,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
 
         public void OnApply()
 		{
+			On.Menu.CharacterSelectPage.UpdateSelectedSlugcat += ExpeditionMenuSceneID.Implementation.CharacterSelectPage_UpdateSelectedSlugcat;
 			On.Menu.MenuScene.BuildScene += MenuScene_BuildScene;
 		}
 

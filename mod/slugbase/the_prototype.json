@@ -111,6 +111,7 @@
 			"limit_reached_result": "ConsumeFood",
 			"stun_timers": [0]
 		},
+		"expedition_menu_art": "Slugcat_Dead_Red",
 		"gills": {
 			"rows": 4,
 			"bounciness": 1,

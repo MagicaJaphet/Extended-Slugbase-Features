@@ -19,6 +19,7 @@ using ExtendedSlugbase.Extensions;
 using ExtendedSlugbase.Assets;
 using ExtendedSlugbase.DataTypes;
 using ExtendedSlugbase.Features;
+using Expedition;
 
 namespace ExtendedSlugbase.Hooks.OnHooks
 {
@@ -96,7 +97,7 @@ namespace ExtendedSlugbase.Hooks.OnHooks
     		orig(self, json);
     	}
 
-    	public void PreApply()
+		public void PreApply()
     	{
 			_ = new Hook(typeof(SlugBase.Assets.CustomScene).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, [typeof(MenuScene.SceneID), typeof(JsonObject)], null), ExtCustomScene_ctor);
     		_ = new Hook(SlugbaseHelpers.FeatureHooks.GetMethod("PlayerGraphics_ApplyPalette", BindingFlags.NonPublic | BindingFlags.Static), Slugbase_ApplyPalette);
