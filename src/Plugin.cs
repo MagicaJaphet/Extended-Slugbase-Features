@@ -15,6 +15,7 @@ using ExtendedSlugbase.Hooks.OnHooks;
 using static ExtendedSlugbase.Features.ExtFeatureTypes;
 using static ExtendedSlugbase.Extensions.SlugbaseHelpers;
 using ExtendedSlugbase.Assets;
+using System.IO;
 
 // Allows access to private members
 #pragma warning disable CS0618
@@ -39,9 +40,9 @@ public class Plugin : PluginTemplate
 	//FEATURE: Configure player grasps (and add sprites)
 	//FEATURE: Embedded pearl
 	//FEATURE: Lock abilities behind a check, with the ability to add tutorial text when first encountering the ability to use them
-
 	//FEATURE: Mauling side effects
 	//FEATURE: Weaver cosmetic toggles
+	//FEATURE: Lineaging chance multipliers (timeline)
 
 	// TODO: Replace with more rich logger
 	public static new ManualLogSource Logger;
@@ -66,21 +67,28 @@ public class Plugin : PluginTemplate
 		try
 		{
 			// Load all features and check if they have a RequiredDLC attribute
-			foreach((string feature, RequiresDLC dlc) in from ass in ReflectionHelpers.GetScanAssemblies()
-			from type in ass.GetTypes() 
-			from field in type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) where typeof(Feature).IsAssignableFrom(field.FieldType) && field.GetCustomAttribute(typeof(ObsoleteAttribute)) == null // Ignore obsolete features
-			let attr = field.GetCustomAttribute(typeof(RequiresDLC)) let feature = field.GetValue(null) where feature != null && attr != null 
-			select ((feature as Feature).ID, attr as RequiresDLC))
+			foreach(Type type in from ass in ReflectionHelpers.GetScanAssemblies()
+			from type in ass.GetTypes()
+			select type)
 			{
-				if (RegisteredFeatures.TryGetValue(feature, out var info))
+				try
 				{
-					info.dlc = dlc;
-					RegisteredFeatures[feature] = info;
+					foreach ((string feature, RequiresDLC dlc) in from field in type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) where typeof(Feature).IsAssignableFrom(field.FieldType) && field.GetCustomAttribute(typeof(ObsoleteAttribute)) == null // Ignore obsolete features
+					let attr = field.GetCustomAttribute(typeof(RequiresDLC)) let feature = field.GetValue(null) where feature != null && attr != null
+					select ((feature as Feature).ID, attr as RequiresDLC))
+					{
+						if (RegisteredFeatures.TryGetValue(feature, out var info))
+						{
+							info.dlc = dlc;
+							RegisteredFeatures[feature] = info;
+						}
+						else
+						{
+							RegisteredFeatures.Add(feature, new() { dlc = dlc });
+						}
+					}
 				}
-				else
-				{
-					RegisteredFeatures.Add(feature, new() { dlc = dlc });        
-				}
+				catch { }
 			}
 			
 			_ = new Hook(typeof(ColorSlot).GetConstructor([typeof(int), typeof(JsonAny)]), SlugbaseHooks.ColorSlot_ctor);
