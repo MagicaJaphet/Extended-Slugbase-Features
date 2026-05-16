@@ -63,38 +63,29 @@ public class Plugin : PluginTemplate
 		_ = new TimelineFeatures();
 		_ = new ObsoleteFeatures();
 
-		// Slugbase hook to trace where Features are initalized from
 		try
 		{
 			// Load all features and check if they have a RequiredDLC attribute
-			foreach(Type type in from ass in ReflectionHelpers.GetScanAssemblies()
-			from type in ass.GetTypes()
-			select type)
+			foreach((string feature, RequiresDLC dlc) in 
+				from field in ReflectionHelpers.GetAllValidLoadedFields()
+				where typeof(Feature).IsAssignableFrom(field.FieldType) && field.GetCustomAttribute(typeof(ObsoleteAttribute)) == null // Ignore obsolete features
+				let attr = field.GetCustomAttribute(typeof(RequiresDLC))
+				let feature = field.GetValue(null)
+				where feature != null && attr != null
+				select ((feature as Feature).ID, attr as RequiresDLC))
 			{
-				try
+				if (RegisteredFeatures.TryGetValue(feature, out var info))
 				{
-					foreach ((string feature, RequiresDLC dlc) in from field in type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) where typeof(Feature).IsAssignableFrom(field.FieldType) && field.GetCustomAttribute(typeof(ObsoleteAttribute)) == null // Ignore obsolete features
-					let attr = field.GetCustomAttribute(typeof(RequiresDLC)) let feature = field.GetValue(null) where feature != null && attr != null
-					select ((feature as Feature).ID, attr as RequiresDLC))
-					{
-						if (RegisteredFeatures.TryGetValue(feature, out var info))
-						{
-							info.dlc = dlc;
-							RegisteredFeatures[feature] = info;
-						}
-						else
-						{
-							RegisteredFeatures.Add(feature, new() { dlc = dlc });
-						}
-					}
+					info.dlc = dlc;
+					RegisteredFeatures[feature] = info;
 				}
-				catch { }
+				else
+				{
+					RegisteredFeatures.Add(feature, new() { dlc = dlc });
+				}
 			}
-			
-			_ = new Hook(typeof(ColorSlot).GetConstructor([typeof(int), typeof(JsonAny)]), SlugbaseHooks.ColorSlot_ctor);
-			_ = new Hook(FeatureManager.GetMethod(nameof(Register), BindingFlags.Public | BindingFlags.Static), SlugbaseHooks.FeatureManagerRegisterHook);
-			_ = new Hook(typeof(SlugBaseCharacter.FeatureList).GetMethod(nameof(SlugBaseCharacter.FeatureList.Set), BindingFlags.Public | BindingFlags.Instance), SlugbaseHooks.FeatureListSet);
-			_ = new Hook(AddMany, SlugbaseHooks.FeatureListAddMany);
+
+			SlugbaseHooks.Plugin_ctor();
 		}
 		catch (Exception ex)
 		{

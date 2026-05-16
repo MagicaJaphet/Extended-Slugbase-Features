@@ -55,7 +55,7 @@ public static class SlugbaseHelpers
 
 	static SlugbaseHelpers()
 	{
-		FeatureManager = (from a in ReflectionHelpers.GetScanAssemblies() from type in a.GetTypes() where type.Name == "FeatureManager" select type).FirstOrDefault();
+		FeatureManager = (from type in ReflectionHelpers.ScanTypes() where type?.Name == "FeatureManager" select type).FirstOrDefault();
 		Register = FeatureManager?.GetMethod(nameof(Register), BindingFlags.Public | BindingFlags.Static);
 		TryGetFeature = FeatureManager?.GetMethod(nameof(TryGetFeature), BindingFlags.Public | BindingFlags.Static);
 

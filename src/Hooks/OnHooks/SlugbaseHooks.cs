@@ -1,31 +1,38 @@
-﻿using MagicaHookingLibrary.Helpers;
+﻿using ExtendedSlugbase.Assets;
+using ExtendedSlugbase.DataTypes;
+using ExtendedSlugbase.Extensions;
+using ExtendedSlugbase.Features;
+using MagicaHookingLibrary.Helpers;
 using MagicaHookingLibrary.Interfaces;
+using Menu;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
+using RWCustom;
+using SlugBase;
 using SlugBase.DataTypes;
 using SlugBase.Features;
-using static ExtendedSlugbase.Extensions.SlugBaseExtensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using SlugBase;
-using MonoMod.Cil;
 using UnityEngine;
-using Mono.Cecil.Cil;
-using RWCustom;
-using Menu;
-using ExtendedSlugbase;
-using ExtendedSlugbase.Extensions;
-using ExtendedSlugbase.Assets;
-using ExtendedSlugbase.DataTypes;
-using ExtendedSlugbase.Features;
-using Expedition;
+using static ExtendedSlugbase.Extensions.SlugBaseExtensions;
+using static ExtendedSlugbase.Extensions.SlugbaseHelpers;
 
 namespace ExtendedSlugbase.Hooks.OnHooks
 {
     public class SlugbaseHooks : IOwnHooks
-    {
-    	internal static void ColorSlot_ctor(Action<ColorSlot, int, JsonAny> orig, ColorSlot self, int index, JsonAny json)
+	{
+		internal static void Plugin_ctor()
+		{
+			_ = new Hook(typeof(ColorSlot).GetConstructor([typeof(int), typeof(JsonAny)]), SlugbaseHooks.ColorSlot_ctor);
+			_ = new Hook(Register, SlugbaseHooks.FeatureManagerRegisterHook);
+			_ = new Hook(typeof(SlugBaseCharacter.FeatureList).GetMethod(nameof(SlugBaseCharacter.FeatureList.Set), BindingFlags.Public | BindingFlags.Instance), SlugbaseHooks.FeatureListSet);
+			_ = new Hook(AddMany, SlugbaseHooks.FeatureListAddMany);
+		}
+
+		internal static void ColorSlot_ctor(Action<ColorSlot, int, JsonAny> orig, ColorSlot self, int index, JsonAny json)
     	{
     		try
     		{
@@ -200,5 +207,5 @@ namespace ExtendedSlugbase.Hooks.OnHooks
     	public void PostApply()
     	{
     	}
-    }
+	}
 }
