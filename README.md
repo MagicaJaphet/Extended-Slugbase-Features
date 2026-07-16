@@ -587,7 +587,7 @@ Ex:
                 "AbstractPhysicalObject": {
                     "type": "SingularityBomb"
                 }
-            },
+            }
         }
     },
     "regurgitate_list": {
