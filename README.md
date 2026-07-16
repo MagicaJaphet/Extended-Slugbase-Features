@@ -599,7 +599,7 @@ Ex:
                         "type": "ScavengerBomb"
                     }
                 },
-                "rarity": 1,
+                "rarity": 1
             }
         ]
     }
