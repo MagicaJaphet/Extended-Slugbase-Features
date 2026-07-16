@@ -587,7 +587,7 @@ Ex:
                 "AbstractPhysicalObject": {
                     "type": "SingularityBomb"
                 }
-            },
+            }
         }
     },
     "regurgitate_list": {
@@ -599,7 +599,7 @@ Ex:
                         "type": "ScavengerBomb"
                     }
                 },
-                "rarity": 1,
+                "rarity": 1
             }
         ]
     }
